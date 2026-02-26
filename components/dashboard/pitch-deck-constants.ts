@@ -1,0 +1,17 @@
+export const PITCH_DECK_SLIDES = [
+    { id: 'title', label: 'Title Slide (Brand Intro)' },
+    { id: 'problem', label: 'The Problem (Pain Points)' },
+    { id: 'solution', label: 'The Solution (Product Reveal)' },
+    { id: 'market', label: 'Market Opportunity (TAM/SAM/SOM)' },
+    { id: 'product', label: 'The Product (Features & Demo)' },
+    { id: 'business_model', label: 'Business Model (How we make money)' },
+    { id: 'traction', label: 'Traction & Validation' },
+    { id: 'gdm', label: 'Go-To-Market Strategy' },
+    { id: 'competition', label: 'Competitive Landscape' },
+    { id: 'advantage', label: 'Competitive Advantage (Moat)' },
+    { id: 'financials', label: 'Financial Projections' },
+    { id: 'team', label: 'The Team' },
+    { id: 'roadmap', label: 'Roadmap & Milestones' },
+    { id: 'ask', label: 'The Ask (Funding Request)' },
+    { id: 'vision', label: 'Vision & Mission' },
+];
