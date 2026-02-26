@@ -38,7 +38,7 @@ export interface AnalysisResult {
         title?: string;
         fatal_flaws?: string[];
         pivot_suggestion?: string;
-        roadmap_tasks?: string[];
+        roadmap_tasks?: { task: string, priority: 'High' | 'Medium' | 'Low', due_date?: string, tags?: string[] }[];
         pitch_deck_data?: { problem: string, solution: string };
 
         market_fit: any;
@@ -51,7 +51,7 @@ export interface AnalysisResult {
 interface ValidatorDashboardProps {
     result: AnalysisResult;
     selectedModules: string[];
-    onFixItPlan?: (tasks: string[]) => void;
+    onFixItPlan?: (tasks: { task: string, priority: 'High' | 'Medium' | 'Low', due_date?: string, tags?: string[] }[]) => void;
     onDraftPitch?: (data: { problem: string, solution: string }) => void;
 }
 

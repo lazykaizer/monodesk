@@ -65,7 +65,7 @@ interface AnalysisResult {
         title?: string;
         fatal_flaws?: string[];
         pivot_suggestion?: string;
-        roadmap_tasks?: string[];
+        roadmap_tasks?: { task: string, priority: 'High' | 'Medium' | 'Low', due_date?: string, tags?: string[] }[];
         pitch_deck_data?: { problem: string, solution: string };
 
         market_fit: any;
@@ -150,7 +150,7 @@ export default function ValidatorClient() {
         return ['🚀', '💡', '⭐', '🎯'][Math.floor(Math.random() * 4)];
     };
 
-    const handleFixItPlan = (tasks: string[]) => {
+    const handleFixItPlan = (tasks: { task: string, priority: 'High' | 'Medium' | 'Low', due_date?: string, tags?: string[] }[]) => {
         if (!tasks || tasks.length === 0) return;
 
         // 1. Get Roadmap Store Actions
@@ -233,12 +233,13 @@ export default function ValidatorClient() {
             });
 
             // Populate database with tasks
-            tasks.forEach((taskText, index) => {
+            tasks.forEach((taskObj) => {
                 actions.addDatabaseRow(dbBlock.id, {
-                    title: taskText,
-                    status: 'Todo',
-                    priority: index < 2 ? 'P1' : (index < 4 ? 'P2' : 'P3'),
-                    due_date: ''
+                    title: taskObj.task,
+                    status: 'To Do',
+                    priority: taskObj.priority,
+                    due_date: taskObj.due_date || '',
+                    tags: taskObj.tags || []
                 });
             });
         }

@@ -29,14 +29,36 @@ export async function generateCreativeImage(
                 const parts: any[] = [];
 
                 if (productImageBase64) {
-                    const base64Data = productImageBase64.split(',')[1];
-                    const mimeType = productImageBase64.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+                    let base64Data = productImageBase64;
+                    let mimeType = 'image/jpeg';
+                    if (productImageBase64.startsWith('http')) {
+                        const imgRes = await fetch(productImageBase64);
+                        if (imgRes.ok) {
+                            const buf = await imgRes.arrayBuffer();
+                            base64Data = Buffer.from(buf).toString('base64');
+                            mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+                        }
+                    } else {
+                        base64Data = productImageBase64.split(',')[1];
+                        mimeType = productImageBase64.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+                    }
                     parts.push({ inlineData: { mimeType, data: base64Data } });
                 }
 
                 if (referenceImageBase64) {
-                    const base64Data = referenceImageBase64.split(',')[1];
-                    const mimeType = referenceImageBase64.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+                    let base64Data = referenceImageBase64;
+                    let mimeType = 'image/jpeg';
+                    if (referenceImageBase64.startsWith('http')) {
+                        const imgRes = await fetch(referenceImageBase64);
+                        if (imgRes.ok) {
+                            const buf = await imgRes.arrayBuffer();
+                            base64Data = Buffer.from(buf).toString('base64');
+                            mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+                        }
+                    } else {
+                        base64Data = referenceImageBase64.split(',')[1];
+                        mimeType = referenceImageBase64.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+                    }
                     parts.push({ inlineData: { mimeType, data: base64Data } });
                 }
 
@@ -51,7 +73,9 @@ export async function generateCreativeImage(
                     body: JSON.stringify({
                         contents: [{ parts }],
                         generationConfig: {
-                            ...(aspectRatio && { imageConfig: { aspectRatio } }),
+                            imageConfig: {
+                                aspectRatio: aspectRatio || "1:1"
+                            }
                         }
                     }),
                     signal: controller.signal
@@ -64,40 +88,46 @@ export async function generateCreativeImage(
                 try {
                     const logPath = path.join(process.cwd(), 'gemini_debug.json');
                     fs.writeFileSync(logPath, JSON.stringify(data, null, 2));
-                    console.log(`Diagnostic log saved to ${logPath}`);
                 } catch (e) { }
 
                 if (!response.ok) {
                     console.error(`${model} failed:`, data.error?.message || response.statusText);
                     lastError = data.error?.message || `API Error ${response.status}`;
-                    continue; // Try next model
-                }
-
-                const candidate = data.candidates?.[0];
-                if (candidate?.finishReason && candidate.finishReason !== "STOP") {
-                    console.warn(`${model} interrupted: ${candidate.finishReason}`);
-                    lastError = `Generation interrupted: ${candidate.finishReason}`;
                     continue;
                 }
 
-                const part = candidate?.content?.parts?.[0];
-                const imgObj = part?.inlineData || (part as any)?.image || (part as any)?.fileData;
-
-                if (imgObj && imgObj.mimeType && (imgObj.data || (imgObj as any).bytes)) {
-                    const bytes = imgObj.data || (imgObj as any).bytes;
-                    return { image: `data:${imgObj.mimeType};base64,${bytes}` };
+                const candidate = data.candidates?.[0];
+                if (candidate?.finishReason && candidate.finishReason !== "STOP" && candidate.finishReason !== "SAFETY") {
+                    // Continue to check if there is some data despite finishReason
                 }
 
-                lastError = "No image data in successful response. Check gemini_debug.json";
-                console.error(`Model ${model} returned success but no image.`);
+                const responseParts = candidate?.content?.parts || [];
 
+                // Robust extraction: Search for ANY image data across ALL parts
+                for (const p of responseParts) {
+                    const img = p.inlineData || (p as any).image || (p as any).fileData;
+                    if (img && img.mimeType && (img.data || (img as any).bytes)) {
+                        const bytes = img.data || (img as any).bytes;
+                        return { image: `data:${img.mimeType};base64,${bytes}` };
+                    }
+                }
+
+                // If we got here, maybe the model returned text instead of an image
+                const textOutput = responseParts.find((p: any) => p.text)?.text;
+                if (textOutput) {
+                    console.warn(`Model ${model} returned text instead of image:`, textOutput.substring(0, 100));
+                    lastError = "Model returned text instead of an image. Reframing prompt...";
+                    continue;
+                }
+
+                lastError = "No image data in successful response.";
             } catch (err: any) {
                 console.error(`Error with model ${model}:`, err.message);
                 lastError = err.message;
             }
         }
 
-        return { error: lastError || "Failed to generate image with available models." };
+        return { error: lastError || "Failed to generate image." };
 
     } catch (error: any) {
         console.error("Server Action Critical Error:", error);
@@ -106,7 +136,7 @@ export async function generateCreativeImage(
 }
 
 export async function generateCreativeVideo(prompt: string, imagePreview?: string) {
-    const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
     if (!API_KEY) return { error: "API Key is missing" };
 
     const model = "veo-3.1-generate-preview";
@@ -119,25 +149,44 @@ export async function generateCreativeVideo(prompt: string, imagePreview?: strin
 
         const instance: any = { prompt: prompt };
         if (imagePreview) {
-            const base64Data = imagePreview.split(',')[1];
-            const mimeType = imagePreview.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+            let base64Data = imagePreview;
+            let mimeType = 'image/jpeg';
+
+            if (imagePreview.startsWith('http')) {
+                try {
+                    const imgRes = await fetch(imagePreview);
+                    if (imgRes.ok) {
+                        const buf = await imgRes.arrayBuffer();
+                        base64Data = Buffer.from(buf).toString('base64');
+                        mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+                    } else {
+                        return { error: "Failed to download the reference image for video generation." };
+                    }
+                } catch (e) {
+                    return { error: "Network error while downloading the reference image." };
+                }
+            } else if (imagePreview.includes(';base64,')) {
+                const parts = imagePreview.split(';base64,');
+                mimeType = parts[0].replace('data:', '') || 'image/jpeg';
+                base64Data = parts[1];
+            } else if (imagePreview.includes(',')) {
+                const parts = imagePreview.split(',');
+                base64Data = parts[1];
+            }
+
+            // OFFICIAL VEO STRUCTURE for image prompts (Variation mode)
             instance.image = {
-                mimeType: mimeType,
-                bytesBase64Encoded: base64Data
+                bytesBase64Encoded: base64Data,
+                mimeType: mimeType
             };
         }
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 90000); // 90 second timeout
 
         const response = await fetch(predictUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ instances: [instance] }),
-            signal: controller.signal
+            body: JSON.stringify({ instances: [instance] })
         });
 
-        clearTimeout(timeoutId);
         const data = await response.json();
 
         if (!response.ok) {
@@ -148,7 +197,7 @@ export async function generateCreativeVideo(prompt: string, imagePreview?: strin
         const operationName = data.name;
         if (!operationName) return { error: "No operation name returned" };
 
-        const maxRetries = 40;
+        const maxRetries = 60; // Increased to 2 minutes
         const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
         for (let i = 0; i < maxRetries; i++) {

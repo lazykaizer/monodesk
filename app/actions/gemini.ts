@@ -54,7 +54,19 @@ export async function generateIdeaAnalysis(idea: string, selectedModules: string
                                     title: { type: "STRING" },
                                     fatal_flaws: { type: "ARRAY", items: { type: "STRING" } },
                                     pivot_suggestion: { type: "STRING" },
-                                    roadmap_tasks: { type: "ARRAY", items: { type: "STRING" } },
+                                    roadmap_tasks: {
+                                        type: "ARRAY",
+                                        items: {
+                                            type: "OBJECT",
+                                            properties: {
+                                                task: { type: "STRING", description: "Clear, actionable task name." },
+                                                priority: { type: "STRING", enum: ["High", "Medium", "Low"], description: "Urgency and impact." },
+                                                due_date: { type: "STRING", description: "Suggested timeline (e.g. 'End of Week 1')." },
+                                                tags: { type: "ARRAY", items: { type: "STRING" }, description: "Relevant categories (e.g. ['MVP', 'Marketing'])." }
+                                            },
+                                            required: ["task", "priority"]
+                                        }
+                                    },
                                     pitch_deck_data: { type: "OBJECT", properties: { problem: { type: "STRING" }, solution: { type: "STRING" } } }
                                 },
                                 // Make required fields flexible based on mode, but schema itself is static
@@ -759,7 +771,7 @@ export async function generatePitchDeckImage(prompt: string) {
             },
             body: JSON.stringify({
                 contents: [{
-                    parts: [{ text: `${prompt}. Minimalist corporate aesthetic, clean editorial photography, soft studio lighting, high-end 3D geometric shapes, professional color palette, hyper-realistic textures.` }]
+                    parts: [{ text: `A high-fidelity editorial image for a pitch deck: ${prompt}. Minimalist corporate aesthetic, clean editorial photography, soft studio lighting, high-end 3D geometric shapes, professional color palette, hyper-realistic textures.` }]
                 }],
                 generationConfig: {
                     imageConfig: {
@@ -774,8 +786,10 @@ export async function generatePitchDeckImage(prompt: string) {
         }
         const data = await response.json();
         const candidate = data.candidates?.[0];
-        const part = candidate?.content?.parts?.[0];
-        const imgObj = part?.inlineData || (part as any)?.image || (part as any)?.fileData;
+        const responseParts = candidate?.content?.parts || [];
+        const imgPart = responseParts.find((p: any) => p.inlineData || p.image || p.fileData);
+        const imgObj = imgPart?.inlineData || (imgPart as any)?.image || (imgPart as any)?.fileData;
+
         if (imgObj && imgObj.mimeType && (imgObj.data || (imgObj as any).bytes)) {
             const bytes = imgObj.data || (imgObj as any).bytes;
             return `data:${imgObj.mimeType};base64,${bytes}`;

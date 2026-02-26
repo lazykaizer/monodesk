@@ -154,6 +154,7 @@ export default function CreativeClient() {
                 }
 
                 setPrompt("");
+                setPrompt("");
                 setAttachedMedia(null);
                 toast.success("Successfully saved to database");
             }
@@ -288,37 +289,22 @@ Apply professional studio lighting and create a clean, high-end commercial photo
 
             if (attachedMedia && mode !== 'agency') {
                 if (mode === 'video') {
-                    finalPrompt = `ACT AS: Professional AI Video Director & Visual Analyst.
-ANCHOR DATA: Use the provided input image as the EXACT starting frame and absolute ground truth for geometry and subject identity.
-CRITICAL PRESERVATION RULES:
-- The video MUST begin with the exact visual state of the reference image.
-- Strictly maintain the subject's identity, structural proportions, and spatial geometry throughout the sequence.
-- Do NOT mutate, morph, or replace any core elements of the input image.
-MOTION & MODIFICATION INSTRUCTION: 
-${finalPrompt}
-TECHNICAL EXECUTION: Ensure smooth temporal consistency. High fidelity motion, 4K visual standard, cinema-grade rendering.`;
+                    finalPrompt = `Video animation based on the reference image: ${finalPrompt}. High fidelity, smooth motion, cinematic rendering.`;
                 } else {
-                    finalPrompt = `ACT AS: Senior Visual Integrity Analyst & Creative Director.
-OBJECTIVE: Generate a variation of the provided reference image while maintaining 100% structural fidelity of the core subject.
-CRITICAL SUBJECT PRESERVATION (STRICT LOCK):
-- LOCK MASK: Lock the exact silhouette, geometric ratios, and internal structure of the primary subject in the input image.
-- DEPTH & FORM: Maintain the original perspective, lighting direction, and 3D volume of the subject.
-- NO MUTATION: Do NOT alter the fundamental design, form factor, or identifying characteristics of the subject. 
-USER REQUESTED MODIFICATIONS:
-${finalPrompt}
-INTEGRATION RULES:
-- Apply modifications as natural additions or environmental changes only.
-- Ensure all new elements wrap around or reflect onto the locked subject realistically.
-- Professional studio lighting, photorealistic integration, hyper-realistic details.`;
+                    finalPrompt = `Image variation of the reference: ${finalPrompt}. Maintain structural fidelity, original perspective, and lighting. Professional studio quality.`;
                 }
             }
 
             if (mode === "video") {
                 const result = await generateCreativeVideo(finalPrompt, attachedMedia || undefined);
                 if (useTaskStore.getState().tasks['creative']?.status !== 'loading') return;
-                if (result.error) throw new Error(result.error);
+
+                if (result.error) {
+                    const errorMsg = typeof result.error === 'string' ? result.error : JSON.stringify(result.error);
+                    throw new Error(errorMsg);
+                }
+
                 if (result.video) {
-                    // result.video is a temporary URI from Google - PERSIST IT IMMEDIATELY
                     await uploadAndSync({
                         assetUrl: result.video,
                         assetType: "video",
@@ -337,8 +323,12 @@ INTEGRATION RULES:
                     })
                 });
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Agency generation failed');
+                    let errorMsg = 'Agency generation failed';
+                    try {
+                        const errorData = await response.json();
+                        errorMsg = errorData.error || errorMsg;
+                    } catch (e) { }
+                    throw new Error(errorMsg);
                 }
                 const result = await response.json();
                 if (useTaskStore.getState().tasks['creative']?.status !== 'loading') return;
@@ -525,7 +515,23 @@ INTEGRATION RULES:
                                             <p className="text-sm font-medium text-zinc-300">{productImage ? (typeof productImage === 'string' ? "From History" : productImage.name) : "Upload Product"}</p>
                                             <p className="text-xs text-zinc-500">Required</p>
                                         </div>
-                                        {productImagePreview && <img src={productImagePreview} alt="Product" className="w-16 h-16 object-cover rounded border border-white/10" />}
+                                        {productImagePreview && (
+                                            <div className="relative group">
+                                                <img src={productImagePreview} alt="Product" className="w-16 h-16 object-cover rounded border border-white/10" />
+                                                <button
+                                                    type="button"
+                                                    className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-opacity z-10 shadow-lg"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setProductImage(null);
+                                                        setProductImagePreview(null);
+                                                    }}
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </div>
+                                        )}
                                         <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'product')} className="hidden" />
                                     </div>
                                 </label>
@@ -543,7 +549,23 @@ INTEGRATION RULES:
                                             <p className="text-sm font-medium text-zinc-400">{referenceImage ? (typeof referenceImage === 'string' ? "From History" : referenceImage.name) : "Background/Scene"}</p>
                                             <p className="text-xs text-zinc-600">Optional</p>
                                         </div>
-                                        {referenceImagePreview && <img src={referenceImagePreview} alt="Reference" className="w-16 h-16 object-cover rounded border border-white/10" />}
+                                        {referenceImagePreview && (
+                                            <div className="relative group">
+                                                <img src={referenceImagePreview} alt="Reference" className="w-16 h-16 object-cover rounded border border-white/10" />
+                                                <button
+                                                    type="button"
+                                                    className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 transition-opacity z-10 shadow-lg"
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        e.stopPropagation();
+                                                        setReferenceImage(null);
+                                                        setReferenceImagePreview(null);
+                                                    }}
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </div>
+                                        )}
                                         <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'reference')} className="hidden" />
                                     </div>
                                 </label>

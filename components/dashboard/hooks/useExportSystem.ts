@@ -4,7 +4,7 @@ import { jsPDF } from 'jspdf';
 import JSZip from 'jszip';
 import pptxgen from "pptxgenjs";
 import { saveAs } from 'file-saver';
-import { Slide } from '../PitchDeckSlide';
+import { Slide as SlideData } from '../PitchDeckSlide';
 
 export type ExportFormat = 'pdf' | 'png-zip' | 'pptx-editable' | 'pptx-static';
 
@@ -12,7 +12,7 @@ export const useExportSystem = () => {
     const [isExporting, setIsExporting] = useState(false);
     const [exportProgress, setExportProgress] = useState<string | null>(null);
 
-    const exportDeck = async (format: ExportFormat, containerId: string, startupName: string, slides: Slide[]) => {
+    const exportDeck = async (format: ExportFormat, containerId: string, startupName: string, slides: SlideData[]) => {
         setIsExporting(true);
         setExportProgress(`Preparing ${format.toUpperCase()}...`);
 
@@ -187,7 +187,7 @@ export const useExportSystem = () => {
         await pptx.writeFile({ fileName: `${filename}_presentation.pptx` });
     };
 
-    const handlePptEditableExport = async (slides: Slide[], filename: string) => {
+    const handlePptEditableExport = async (slides: SlideData[], filename: string) => {
         let pptx = new pptxgen();
         pptx.layout = 'LAYOUT_WIDE';
 

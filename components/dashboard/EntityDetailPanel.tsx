@@ -57,13 +57,13 @@ export default function EntityDetailPanel() {
 
     const toggleSubtask = (id: string) => {
         handleUpdate({
-            subtasks: entity.subtasks.map(s => s.id === id ? { ...s, completed: !s.completed } : s)
+            subtasks: entity.subtasks.map((s: any) => s.id === id ? { ...s, completed: !s.completed } : s)
         });
     };
 
     const removeSubtask = (id: string) => {
         handleUpdate({
-            subtasks: entity.subtasks.filter(s => s.id !== id)
+            subtasks: entity.subtasks.filter((s: any) => s.id !== id)
         });
     };
 
@@ -216,12 +216,12 @@ export default function EntityDetailPanel() {
                                         <span className="text-[10px] font-black uppercase tracking-[0.2em]">Actionable Sub-blocks</span>
                                     </div>
                                     <span className="text-[10px] font-mono text-zinc-800 bg-white/5 px-3 py-1 rounded-full">
-                                        {entity.subtasks.filter(s => s.completed).length} / {entity.subtasks.length} COMPLETE
+                                        {entity.subtasks.filter((s: any) => s.completed).length} / {entity.subtasks.length} COMPLETE
                                     </span>
                                 </div>
 
                                 <div className="space-y-3">
-                                    {entity.subtasks.map(subtask => (
+                                    {entity.subtasks.map((subtask: any) => (
                                         <div key={subtask.id} className="flex items-center justify-between group/item p-4 bg-white/[0.01] border border-white/5 rounded-2xl hover:bg-white/[0.03] hover:border-white/10 transition-all">
                                             <div className="flex items-center gap-4">
                                                 <button

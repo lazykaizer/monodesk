@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { RefreshCw, Image as ImageIcon, Loader2, Sparkles, ChevronRight, TrendingUp, Shield, Zap, Globe, Cloud, Users, Target, DollarSign, Rocket, Brain, Search, Activity, Layers, Cpu, Database, Mail, Phone, Lock, Unlock, Key, Settings, Trash2, Edit3, Plus, Minus, Check, X, Info, HelpCircle, AlertTriangle, Star, Heart, Smile, AlignLeft, AlignCenter, AlignRight, MousePointer2 } from 'lucide-react';
@@ -10,7 +10,7 @@ import {
 import { generatePitchDeckImage } from '@/app/actions/gemini';
 import { cn, sanitizeAIText } from '@/lib/utils';
 
-import { Slide, SlideFeature, DesignDNA } from '@/lib/types/pitch-deck';
+import { Slide as SlideData, SlideFeature, DesignDNA } from '@/lib/types/pitch-deck';
 
 // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // STABLE EDITABLE TEXT COMPONENT â€” defined OUTSIDE PitchDeckSlide
@@ -142,11 +142,13 @@ const EditableText = memo(function EditableText({
     );
 });
 
-interface PitchDeckSlideProps {
-    slide: Slide;
+export interface Slide extends SlideData {}
+
+export interface PitchDeckSlideProps {
+    slide: SlideData;
     isActive?: boolean;
     isEditing?: boolean;
-    onUpdate?: (updatedSlide: Slide) => void;
+    onUpdate?: (updatedSlide: SlideData) => void;
     onRegenerateImage?: () => void;
     isRefreshingImage?: boolean;
     exportMode?: boolean;

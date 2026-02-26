@@ -1150,6 +1150,15 @@ export default function PitchDeckArchitect() {
                                                 </div>
 
                                                 <div className="relative max-w-3xl mx-auto">
+                                                    {currentProject && !deckConfig.idea && (
+                                                        <button
+                                                            onClick={() => setDeckConfig(prev => ({ ...prev, idea: currentProject.description || currentProject.name }))}
+                                                            className="absolute -top-10 left-4 z-10 text-[10px] text-cyan-400 hover:text-cyan-300 font-bold tracking-widest uppercase flex items-center gap-2 transition-colors bg-cyan-500/10 backdrop-blur-sm px-3 py-1.5 rounded-t-lg border border-b-0 border-cyan-500/20"
+                                                        >
+                                                            <Rocket size={12} />
+                                                            Auto-fill from {currentProject.name}
+                                                        </button>
+                                                    )}
                                                     <textarea
                                                         value={deckConfig.idea}
                                                         onChange={(e) => setDeckConfig(prev => ({ ...prev, idea: e.target.value }))}

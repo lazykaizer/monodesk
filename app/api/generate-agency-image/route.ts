@@ -20,8 +20,20 @@ export async function POST(request: NextRequest) {
 
         // Add product image first if provided
         if (productImageBase64) {
-            const base64Data = productImageBase64.split(',')[1];
-            const mimeType = productImageBase64.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+            let base64Data = productImageBase64;
+            let mimeType = 'image/jpeg';
+            if (productImageBase64.startsWith('http')) {
+                const imgRes = await fetch(productImageBase64);
+                if (imgRes.ok) {
+                    const buf = await imgRes.arrayBuffer();
+                    base64Data = Buffer.from(buf).toString('base64');
+                    mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+                }
+            } else {
+                base64Data = productImageBase64.split(',')[1];
+                mimeType = productImageBase64.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+            }
+
             parts.push({
                 inlineData: {
                     mimeType: mimeType,
@@ -32,8 +44,19 @@ export async function POST(request: NextRequest) {
 
         // Add reference image second if provided
         if (referenceImageBase64) {
-            const base64Data = referenceImageBase64.split(',')[1];
-            const mimeType = referenceImageBase64.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+            let base64Data = referenceImageBase64;
+            let mimeType = 'image/jpeg';
+            if (referenceImageBase64.startsWith('http')) {
+                const imgRes = await fetch(referenceImageBase64);
+                if (imgRes.ok) {
+                    const buf = await imgRes.arrayBuffer();
+                    base64Data = Buffer.from(buf).toString('base64');
+                    mimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+                }
+            } else {
+                base64Data = referenceImageBase64.split(',')[1];
+                mimeType = referenceImageBase64.match(/data:(.*?);base64/)?.[1] || 'image/jpeg';
+            }
             parts.push({
                 inlineData: {
                     mimeType: mimeType,
@@ -43,7 +66,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Add text prompt
-        parts.push({ text: prompt });
+        parts.push({ text: `A high-fidelity composite image: ${prompt}. Cinematic, professional lighting, photorealistic.` });
 
         const response = await fetch(url, {
             method: "POST",
@@ -55,21 +78,22 @@ export async function POST(request: NextRequest) {
                     parts: parts
                 }],
                 generationConfig: {
-                    // Gemini Nano Banana Pro / Imagen 3 payload structure
-                    ...(aspectRatio && {
-                        imageConfig: {
-                            aspectRatio: aspectRatio
-                        }
-                    }),
+                    imageConfig: {
+                        aspectRatio: aspectRatio || "1:1"
+                    }
                 }
             }),
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
+            let errorText = await response.text();
+            try {
+                const errJson = JSON.parse(errorText);
+                errorText = errJson.error?.message || errorText;
+            } catch (e) { }
             console.error("Gemini API Error:", errorText);
             return NextResponse.json(
-                { error: `API Error: ${response.status} ${response.statusText}` },
+                { error: `API Error: ${response.status} - ${errorText.substring(0, 50)}` },
                 { status: response.status }
             );
         }
@@ -78,12 +102,14 @@ export async function POST(request: NextRequest) {
 
         // Parse for inlineData
         const candidate = data.candidates?.[0];
-        const part = candidate?.content?.parts?.[0];
-        const inlineData = part?.inlineData;
+        const responseParts = candidate?.content?.parts || [];
+        const imgPart = responseParts.find((p: any) => p.inlineData || p.image || p.fileData);
+        const imgObj = imgPart?.inlineData || (imgPart as any)?.image || (imgPart as any)?.fileData;
 
-        if (inlineData && inlineData.mimeType && inlineData.data) {
+        if (imgObj && imgObj.mimeType && (imgObj.data || (imgObj as any).bytes)) {
+            const bytes = imgObj.data || (imgObj as any).bytes;
             return NextResponse.json({
-                image: `data:${inlineData.mimeType};base64,${inlineData.data}`
+                image: `data:${imgObj.mimeType};base64,${bytes}`
             });
         }
 

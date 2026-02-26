@@ -27,6 +27,7 @@ interface ProjectStore {
     createProject: (name: string, description?: string) => Promise<string | null>;
     deleteProject: (projectId: string) => Promise<void>;
     refreshCurrentProject: () => Promise<void>;
+    reset: () => void;
 }
 
 const supabase = createClient();
@@ -200,7 +201,14 @@ export const useProjectStore = create<ProjectStore>()(
                 if (activeProjectId) {
                     await get().setActiveProject(activeProjectId);
                 }
-            }
+            },
+            reset: () => set({
+                projects: [],
+                activeProjectId: null,
+                currentProject: null,
+                isLoading: false,
+                error: null
+            })
         }),
         {
             name: 'monodesk-projects',

@@ -9,6 +9,18 @@ export type BlockType =
 export type ViewType = 'Table' | 'Board' | 'Timeline' | 'Calendar' | 'List' | 'Chart';
 export type PropertyType = 'text' | 'status' | 'priority' | 'date' | 'number' | 'multi-select' | 'checkbox' | 'url' | 'email' | 'phone' | 'person' | 'file' | 'select';
 export type Priority = 'High' | 'Medium' | 'Low' | 'None';
+export type EntityStatus = string;
+export interface RoadmapEntity { 
+    id: string; 
+    title?: string;
+    subtasks?: any[];
+    priority?: string;
+    effort?: number;
+    notes?: string;
+    status?: string;
+    blockType?: BlockType;
+    deadline?: string;
+}
 
 export interface DatabaseProperty {
     id: string;
@@ -83,6 +95,9 @@ interface RoadmapStore {
     clipboard: { type: 'block' | 'row', data: any, blockId?: string } | null;
     focusedId: string | null;
     focusedRowId: { id: string, blockId: string } | null;
+    activeEntityId: string | null;
+    entities: any[];
+    statusColumns: string[];
 
     // View Actions
     setCurrentView: (view: 'editor' | 'home') => void;
@@ -140,6 +155,9 @@ interface RoadmapStore {
     setSlashQuery: (query: string) => void;
     setSlashMenuState: (state: { blockId: string; x: number; y: number } | null) => void;
     addHistory: (blockId: string, title: string, action?: ActivityEntry['action'], blockType?: BlockType) => void;
+    setActiveEntity: (id: string | null) => void;
+    upsertEntity: (entity: any) => void;
+    deleteEntity: (id: string) => void;
     reset: () => void;
 }
 
@@ -159,6 +177,9 @@ export const useRoadmapStore = create<RoadmapStore>()(
             clipboard: null,
             focusedId: null,
             focusedRowId: null,
+            activeEntityId: null,
+            entities: [],
+            statusColumns: ['To Do', 'In Progress', 'Done', 'Archived'],
 
             setCurrentView: (view) => set({ currentView: view }),
             setSearchOpen: (open) => set({ isSearchOpen: open }),
@@ -656,7 +677,30 @@ export const useRoadmapStore = create<RoadmapStore>()(
                 return { history: [newEntry, ...state.history].slice(0, 50) };
             }),
 
-            reset: () => set({ pages: [], activePageId: null, blocks: [], history: [], sidebarOpen: true }),
+            setActiveEntity: (id) => set({ activeEntityId: id }),
+            upsertEntity: (entity) => set((state) => {
+                const index = state.entities.findIndex(e => e.id === entity.id);
+                if (index > -1) {
+                    const newEntities = [...state.entities];
+                    newEntities[index] = { ...newEntities[index], ...entity };
+                    return { entities: newEntities };
+                }
+                return { entities: [...state.entities, entity] };
+            }),
+            deleteEntity: (id) => set((state) => ({
+                entities: state.entities.filter(e => e.id !== id),
+                activeEntityId: state.activeEntityId === id ? null : state.activeEntityId
+            })),
+
+            reset: () => set({ 
+                pages: [], 
+                activePageId: null, 
+                blocks: [], 
+                history: [], 
+                sidebarOpen: true,
+                entities: [],
+                activeEntityId: null
+            }),
         }),
         {
             name: 'monodesk-workspace-engine-v3',

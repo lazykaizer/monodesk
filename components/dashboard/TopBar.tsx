@@ -41,9 +41,31 @@ export default function TopBar() {
     }, [supabase.auth]);
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut();
-        router.refresh(); // Refresh to clean server-side state
-        router.push("/login"); // Redirect to login
+        try {
+            // 1. Dynamic imports to avoid SSR issues or circular dependencies
+            const { useTaskStore } = await import("@/lib/store/useTaskStore");
+            const { useProjectStore } = await import("@/lib/store/useProjectStore");
+            const { useRoadmapStore } = await import("@/lib/store/useRoadmapStore");
+
+            // 2. Reset all global stores
+            useTaskStore.getState().reset();
+            useProjectStore.getState().reset();
+            useRoadmapStore.getState().reset();
+
+            // 3. Clear all local/session storage
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // 4. Sign out from Supabase
+            await supabase.auth.signOut();
+
+            // 5. Force a hard redirect to login to completely dump memory
+            window.location.href = "/login";
+        } catch (error) {
+            console.error("Sign out error:", error);
+            // Fallback redirect
+            window.location.href = "/login";
+        }
     };
 
     return (
