@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Mail, Lock, Camera, Save, Loader2, AlertCircle, CheckCircle2, Edit2, X } from "lucide-react";
+import { User, Mail, Lock, Camera, Save, Loader2, AlertCircle, CheckCircle2, Edit2, X, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -29,6 +29,16 @@ export default function ProfilePage() {
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
     const [passwordLoading, setPasswordLoading] = useState(false);
+
+    // Auto-hide message after 15 seconds
+    useEffect(() => {
+        if (message) {
+            const timer = setTimeout(() => {
+                setMessage(null);
+            }, 15000); // 15 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [message]);
 
     // -- AVATAR STATE --
     const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -231,25 +241,63 @@ export default function ProfilePage() {
         <div className="max-w-4xl mx-auto space-y-8">
 
             {/* Header */}
-            <div>
-                <h1 className="text-3xl font-bold mb-2">Profile Settings</h1>
-                <p className="text-white/50">Manage your account settings and preferences.</p>
+            <div className="flex items-start gap-5">
+                <button
+                    onClick={() => router.back()}
+                    className="mt-1 w-11 h-11 rounded-2xl bg-white/[0.03] border border-white/10 flex items-center justify-center hover:bg-white/[0.08] hover:border-white/20 transition-all group outline-none shrink-0"
+                >
+                    <ArrowLeft size={20} className="group-hover:-translate-x-1 transition-transform" />
+                </button>
+                <div>
+                    <h1 className="text-4xl font-black mb-2 tracking-tight">Profile Settings</h1>
+                    <p className="text-white/40 text-sm font-medium font-sans">Manage your account settings and preferences.</p>
+                </div>
             </div>
 
-            {/* Message Alert */}
+            {/* Floating Message Popup (Toast) */}
             <AnimatePresence>
                 {message && (
                     <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        className={`p-4 rounded-xl border flex items-center gap-3 ${message.type === 'success'
+                        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+                        className="fixed bottom-8 right-8 z-[100] min-w-[320px] max-w-md"
+                    >
+                        <div className={`
+                            relative overflow-hidden p-1 rounded-[22px] border backdrop-blur-xl shadow-2xl
+                            ${message.type === 'success'
                                 ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500'
                                 : 'bg-red-500/10 border-red-500/20 text-red-500'
-                            }`}
-                    >
-                        {message.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
-                        <p className="font-medium">{message.text}</p>
+                            }
+                        `}>
+                            {/* Progress bar for 15s timer */}
+                            <motion.div
+                                initial={{ width: "100%" }}
+                                animate={{ width: "0%" }}
+                                transition={{ duration: 15, ease: "linear" }}
+                                className={`absolute bottom-0 left-0 h-1 ${message.type === 'success' ? 'bg-emerald-500/30' : 'bg-red-500/30'}`}
+                            />
+
+                            <div className="flex items-center justify-between p-4 gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className={`p-2 rounded-xl ${message.type === 'success' ? 'bg-emerald-500/10' : 'bg-red-500/10'}`}>
+                                        {message.type === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black uppercase tracking-widest opacity-50 mb-0.5">
+                                            {message.type === 'success' ? 'Success' : 'Attention'}
+                                        </span>
+                                        <p className="text-sm font-bold text-white leading-tight">{message.text}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setMessage(null)}
+                                    className="p-2 hover:bg-white/5 rounded-lg transition-colors group"
+                                >
+                                    <X size={16} className="opacity-40 group-hover:opacity-100" />
+                                </button>
+                            </div>
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -317,7 +365,11 @@ export default function ProfilePage() {
                                 <input
                                     type="text"
                                     value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        const sanitized = val.replace(/[^a-zA-Z\s']/g, "");
+                                        setFullName(sanitized);
+                                    }}
                                     className="flex-1 bg-black/20 border border-white/10 rounded-xl py-2 px-4 text-white focus:outline-none focus:border-accent-purple/50 focus:ring-1 focus:ring-accent-purple/50"
                                     placeholder="Enter your name"
                                 />

@@ -16,6 +16,7 @@ export default function SignupPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [verifying, setVerifying] = useState(false);
+    const [otp, setOtp] = useState("");
     const router = useRouter();
     const supabase = createClient();
 
@@ -38,6 +39,25 @@ export default function SignupPage() {
 
             if (signUpError) throw signUpError;
             setVerifying(true);
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleVerify = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setError(null);
+        try {
+            const { error } = await supabase.auth.verifyOtp({
+                email,
+                token: otp,
+                type: 'signup'
+            });
+            if (error) throw error;
+            router.push("/dashboard");
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -104,13 +124,39 @@ export default function SignupPage() {
                         )}
 
                         {verifying ? (
-                            <div className="text-center p-8 bg-white/[0.02] border border-white/[0.05] rounded-3xl">
-                                <div className="w-16 h-16 bg-orange-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                                    <Mail className="text-orange-500 animate-bounce" size={32} />
+                            <div className="space-y-6">
+                                <div className="text-center p-4">
+                                    <div className="w-16 h-16 bg-orange-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                                        <Lock className="text-orange-500 animate-pulse" size={32} />
+                                    </div>
+                                    <h2 className="text-xl font-bold mb-2">Verify your email</h2>
+                                    <p className="text-white/40 text-sm mb-6">Enter the 6-digit code sent to <span className="text-white">{email}</span></p>
+
+                                    <form onSubmit={handleVerify} className="space-y-4">
+                                        <div className="relative group/input">
+                                            <input
+                                                type="text"
+                                                maxLength={6}
+                                                placeholder="000000"
+                                                value={otp}
+                                                onChange={(e) => setOtp(e.target.value)}
+                                                required
+                                                className="w-full bg-white/[0.01] border border-white/[0.05] group-hover/input:border-white/10 rounded-2xl py-4 text-center text-2xl font-black tracking-[0.5em] text-white placeholder:text-white/10 focus:outline-none focus:border-orange-500/50 focus:bg-orange-500/[0.02] transition-all duration-500 ring-0 focus:ring-4 focus:ring-orange-500/10"
+                                            />
+                                        </div>
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="w-full h-14 bg-[#FF5C00] hover:bg-[#FF6D1A] text-white font-black text-lg rounded-2xl transition-all duration-500 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center"
+                                        >
+                                            {loading ? <Loader2 className="animate-spin" size={24} /> : "Verify Code"}
+                                        </button>
+                                    </form>
+
+                                    <div className="mt-8">
+                                        <button onClick={() => setVerifying(false)} className="text-orange-500 text-[10px] font-black uppercase tracking-widest hover:text-orange-400">Try another email</button>
+                                    </div>
                                 </div>
-                                <h2 className="text-xl font-bold mb-2">Check your inbox</h2>
-                                <p className="text-white/40 text-sm mb-8">We've sent a verification link to your email address.</p>
-                                <button onClick={() => setVerifying(false)} className="text-orange-500 text-xs font-black uppercase tracking-widest hover:text-orange-400">Try another email</button>
                             </div>
                         ) : (
                             <div className="space-y-5">
@@ -156,9 +202,13 @@ export default function SignupPage() {
                                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-orange-500 transition-all duration-500 group-focus-within/input:scale-110" size={18} />
                                                 <input
                                                     type="text"
-                                                    placeholder="John Doe"
+                                                    placeholder="Kaizer D'souza"
                                                     value={fullName}
-                                                    onChange={(e) => setFullName(e.target.value)}
+                                                    onChange={(e) => {
+                                                        const val = e.target.value;
+                                                        const sanitized = val.replace(/[^a-zA-Z\s']/g, "");
+                                                        setFullName(sanitized);
+                                                    }}
                                                     required
                                                     className="w-full bg-white/[0.01] border border-white/[0.05] group-hover/input:border-white/10 rounded-2xl py-4 pl-14 pr-4 text-white placeholder:text-white/10 focus:outline-none focus:border-orange-500/50 focus:bg-orange-500/[0.02] transition-all duration-500 ring-0 focus:ring-4 focus:ring-orange-500/10"
                                                 />
@@ -338,81 +388,6 @@ export default function SignupPage() {
                             </div>
                         </div>
 
-                        {/* Live Graph Visualization: Market Momentum */}
-                        <div className="p-8 border-b border-white/5 relative overflow-hidden group/graph bg-[#151515]/30">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/[0.03] to-transparent" />
-
-                            <div className="flex justify-between items-end mb-8 relative z-10">
-                                <div className="space-y-1.5">
-                                    <span className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] block">Market Momentum</span>
-                                    <div className="flex items-baseline gap-1">
-                                        <motion.span
-                                            animate={{ opacity: [1, 0.7, 1] }}
-                                            transition={{ duration: 2, repeat: Infinity }}
-                                            className="text-4xl font-black text-white tracking-tighter"
-                                        >
-                                            142.
-                                        </motion.span>
-                                        <span className="text-4xl font-black text-orange-500 tracking-tighter">
-                                            8
-                                        </span>
-                                        <span className="text-4xl font-black text-white tracking-tighter">%</span>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full mb-2">
-                                        <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest block">Exponential Growth</span>
-                                    </div>
-                                    <div className="flex justify-end gap-1.5">
-                                        {[1, 2, 3, 4, 5].map((i) => (
-                                            <motion.div
-                                                key={i}
-                                                animate={i <= 4 ? {
-                                                    opacity: [1, 0.3, 1],
-                                                    scale: [1, 1.2, 1]
-                                                } : {}}
-                                                transition={{ duration: 1, repeat: Infinity, delay: i * 0.1 }}
-                                                className={`h-1.5 w-1.5 rounded-full ${i <= 4 ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-white/10'}`}
-                                            />
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* INFINITE ANIMATED GRAPH PATH */}
-                            <div className="h-20 w-full relative">
-                                <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
-                                    <defs>
-                                        <linearGradient id="line-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                                            <stop offset="0%" stopColor="#FF5C00" stopOpacity="0.2" />
-                                            <stop offset="50%" stopColor="#FF5C00" stopOpacity="1" />
-                                            <stop offset="100%" stopColor="#4285F4" stopOpacity="1" />
-                                        </linearGradient>
-                                    </defs>
-                                    <motion.path
-                                        d="M0 60 Q 50 20, 100 50 T 200 30 T 300 60 T 400 15"
-                                        fill="none"
-                                        stroke="url(#line-gradient)"
-                                        strokeWidth="4"
-                                        strokeLinecap="round"
-                                        initial={{ pathLength: 0 }}
-                                        animate={{ pathLength: 1 }}
-                                        transition={{ duration: 2.5, ease: "easeOut" }}
-                                    />
-                                    {/* Scanning Point on Path */}
-                                    <motion.circle
-                                        r="4"
-                                        fill="white"
-                                        className="shadow-[0_0_15px_rgba(255,255,255,1)]"
-                                        animate={{
-                                            offsetDistance: ["0%", "100%"]
-                                        }}
-                                        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                                        style={{ offsetPath: "path('M0 60 Q 50 20, 100 50 T 200 30 T 300 60 T 400 15')" }}
-                                    />
-                                </svg>
-                            </div>
-                        </div>
 
                         {/* Market Signals List */}
                         <div className="p-8 space-y-6 relative z-10">
