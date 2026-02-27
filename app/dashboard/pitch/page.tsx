@@ -1,4 +1,4 @@
-import PitchDeckArchitect from "@/components/dashboard/PitchDeckArchitect";
+import PitchDeckArchitect from "@/components/dashboard/pitch-deck/PitchDeckArchitect";
 
 export default function PitchPage() {
     return (

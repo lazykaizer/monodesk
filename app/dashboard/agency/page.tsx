@@ -21,12 +21,12 @@ import {
     Sparkles,
     Check
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Slider } from "@/components/ui/slider";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/core/button";
+import { ScrollArea } from "@/components/ui/core/scroll-area";
+import { Slider } from "@/components/ui/core/slider";
+import { Badge } from "@/components/ui/core/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/core/tabs";
+import { Switch } from "@/components/ui/core/switch";
 import { cn } from "@/lib/utils";
 
 // --- Mock Data ---

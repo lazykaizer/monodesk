@@ -1,7 +1,7 @@
 "use client";
 
-import ValidatorClient from "@/components/dashboard/ValidatorClient";
-import ValidatorSkeleton from "@/components/dashboard/ValidatorSkeleton";
+import ValidatorClient from "@/components/dashboard/validator/ValidatorClient";
+import ValidatorSkeleton from "@/components/dashboard/validator/ValidatorSkeleton";
 import { Suspense, useEffect, useRef } from "react";
 
 

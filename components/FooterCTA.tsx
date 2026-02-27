@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MarqueeAnimation } from "@/components/ui/marquee-effect";
+import { MarqueeAnimation } from "@/components/ui/effects/marquee-effect";
 
 export default function FooterCTA() {
     return (

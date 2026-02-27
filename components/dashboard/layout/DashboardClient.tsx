@@ -4,16 +4,14 @@ import { GooeyText } from "@/components/ui/animations/gooey-text-morphing";
 import { RevealImageList } from "@/components/ui/effects/reveal-images";
 import RadialOrbitalTimeline from "@/components/ui/specialized/radial-orbital-timeline";
 import {
-    Palette,
     Lightbulb,
     TrendingUp,
-    Presentation,
     BarChart3,
     Users,
     PenTool,
+    Map,
     DollarSign,
-    Briefcase,
-    Map
+    Briefcase
 } from "lucide-react";
 
 const dashboardModulesData = [
@@ -27,26 +25,14 @@ const dashboardModulesData = [
     { id: 8, title: "Pitch Deck", date: "Phase 4", content: "Create compelling pitch decks for investors.", category: "Fundraising", icon: Briefcase, relatedIds: [4, 6], status: "pending" as const, energy: 0, href: "/dashboard/pitch" }
 ];
 
-import { BackgroundPaths } from "@/components/ui/effects/background-paths";
-
-// ... existing imports
-
-export default function DashboardPage() {
-
-    // Future: Supabase realtime logic here
+export default function DashboardClient() {
     const handleServiceClick = (item: any) => {
         console.log(`[Realtime Action] Initializing ${item.title} module...`);
-        // router.push(`/dashboard/${item.title.toLowerCase().replace(" ", "-")}`);
     };
 
     return (
-        <div className="flex flex-col items-center justify-start w-full min-h-screen -mt-8 pb-20 overflow-x-hidden relative">
-            <BackgroundPaths />
-
-
-
-            {/* PERMANENT WELCOME ANIMATION - DO NOT REMOVE */}
-            <div className="h-[120px] w-full flex items-center justify-center relative z-0">
+        <div className="flex flex-col items-center justify-start w-full min-h-screen px-8 pt-4 pb-32 overflow-x-hidden relative">
+            <div className="h-[100px] w-full flex items-center justify-center relative z-0">
                 <GooeyText
                     texts={["Welcome", "to", "Monodesk"]}
                     morphTime={0.8}
@@ -55,7 +41,6 @@ export default function DashboardPage() {
                 />
             </div>
 
-            {/* Subtitle Message */}
             <div className="mt-2 text-center relative z-10 px-4 mb-4">
                 <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 drop-shadow-sm font-sans uppercase">
                     All systems operational.
@@ -65,19 +50,16 @@ export default function DashboardPage() {
                 </p>
             </div>
 
-            {/* Reveal Image List (Services) */}
             <div className="w-full max-w-4xl mx-auto mb-0 mt-16">
                 <RevealImageList />
             </div>
 
-            {/* Radial Orbital Timeline */}
             <div className="w-full max-w-5xl mx-auto mt-10">
                 <RadialOrbitalTimeline
                     timelineData={dashboardModulesData}
                     onItemClick={handleServiceClick}
                 />
             </div>
-
         </div>
     );
 }

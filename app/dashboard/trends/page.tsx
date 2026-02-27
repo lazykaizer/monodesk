@@ -1,5 +1,5 @@
-import TrendsClient from "@/components/dashboard/TrendsClient";
-import TrendsSkeleton from "@/components/dashboard/TrendsSkeleton";
+import TrendsClient from "@/components/dashboard/trends/TrendsClient";
+import TrendsSkeleton from "@/components/dashboard/trends/TrendsSkeleton";
 import { Suspense } from "react";
 
 export default function TrendsPage() {

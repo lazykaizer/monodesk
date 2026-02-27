@@ -1,8 +1,8 @@
 "use client";
 
-import TopBar from "@/components/dashboard/TopBar";
-import GradientMenu from "@/components/ui/gradient-menu";
-import RoadmapSidebar from "@/components/dashboard/RoadmapSidebar";
+import TopBar from "@/components/dashboard/layout/TopBar";
+import GradientMenu from "@/components/ui/animations/gradient-menu";
+import RoadmapSidebar from "@/components/dashboard/roadmap/RoadmapSidebar";
 import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";

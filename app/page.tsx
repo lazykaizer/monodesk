@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AnimatedHero } from "@/components/ui/animated-hero";
+import { AnimatedHero } from "@/components/ui/animations/animated-hero";
 import MonodeskHero from "@/components/MonodeskHero";
 import FooterCTA from "@/components/FooterCTA";
 

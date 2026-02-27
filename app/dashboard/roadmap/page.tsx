@@ -1,5 +1,5 @@
-import RoadmapClient from "@/components/dashboard/RoadmapClient";
-import RoadmapSkeleton from "@/components/dashboard/RoadmapSkeleton";
+import RoadmapClient from "@/components/dashboard/roadmap/RoadmapClient";
+import RoadmapSkeleton from "@/components/dashboard/roadmap/RoadmapSkeleton";
 import { Suspense } from "react";
 
 export default function RoadmapPage() {
