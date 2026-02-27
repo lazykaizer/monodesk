@@ -30,8 +30,7 @@ export default function TopBar() {
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setUser(session?.user ?? null);
             if (!session) {
-                // If no session (signed out), redirect to login
-                // router.push('/login'); 
+                // No session
             }
         });
 

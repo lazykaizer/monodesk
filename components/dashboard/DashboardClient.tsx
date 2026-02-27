@@ -8,7 +8,6 @@ import {
     TrendingUp,
     BarChart3,
     Users,
-    Presentation,
     PenTool,
     Map,
     DollarSign,
