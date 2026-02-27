@@ -20,13 +20,13 @@ export function summarizeProjectContext(project: Project | null) {
         // Validator Insights
         marketScore: kb.validator?.dashboard_summary?.market_score,
         feasibility: kb.validator?.dashboard_summary?.feasibility_score,
-        keyRisks: kb.validator?.modules_analysis?.map((m: any) => m.deep_dive?.risks).flat().filter(Boolean).slice(0, 5),
+        keyRisks: kb.validator?.modules_analysis?.map((m: { deep_dive?: { risks?: string[] } }) => m.deep_dive?.risks).flat().filter(Boolean).slice(0, 5),
         primaryVerdict: kb.validator?.modules_analysis?.[0]?.quick_view?.verdict,
 
         // Trends & Strategy
-        topCompetitors: kb.trends?.competitors?.map((c: any) => c.name) || kb.validator?.dashboard_summary?.top_competitors?.map((c: any) => c.name),
+        topCompetitors: kb.trends?.competitors?.map((c: { name: string }) => c.name) || kb.validator?.dashboard_summary?.top_competitors?.map((c: { name: string }) => c.name),
         marketGaps: kb.trends?.insights?.market_gaps,
-        strategicFocus: kb.strategy?.swot?.filter((s: any) => s.impact === 'High').map((s: any) => s.title),
+        strategicFocus: kb.strategy?.swot?.filter((s: { impact: string; title: string }) => s.impact === 'High').map((s: { title: string }) => s.title),
 
         // Style DNA (For Creative Studio & Visuals)
         styleDNA: project.style_guide?.style_dna || null

@@ -30,7 +30,7 @@ import { Button } from "@/components/ui/core/button";
 import { CardTitle } from "@/components/ui/core/card";
 import { Input } from "@/components/ui/core/input";
 import { Badge } from "@/components/ui/core/badge";
-import { Scroller } from "@/components/ui/specialized/scroller-1";
+import { Scroller } from "@/components/ui/specialized/scroller";
 import { cn } from "@/lib/utils";
 import { useTaskStore } from "@/lib/store/useTaskStore";
 import { useProjectStore } from "@/lib/store/useProjectStore";
@@ -186,7 +186,7 @@ export default function ValidatorClient() {
         // Header
         actions.addBlock('h1');
         let currentBlocks = useRoadmapStore.getState().blocks;
-        let headerBlock = currentBlocks[currentBlocks.length - 1];
+        const headerBlock = currentBlocks[currentBlocks.length - 1];
         if (headerBlock) {
             actions.updateBlock(headerBlock.id, { content: `Fix-It Plan: ${ideaTitle}` });
         }
@@ -194,7 +194,7 @@ export default function ValidatorClient() {
         // Context paragraph
         actions.addBlock('text');
         currentBlocks = useRoadmapStore.getState().blocks;
-        let contextBlock = currentBlocks[currentBlocks.length - 1];
+        const contextBlock = currentBlocks[currentBlocks.length - 1];
         if (contextBlock) {
             actions.updateBlock(contextBlock.id, {
                 content: '🎯 Critical tasks identified by AI Validator to address fatal flaws and improve viability. Track progress below.'

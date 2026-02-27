@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
         // --- Currency Normalization Logic ---
         let normalizedAmount = analysis.amount;
-        let originalCurrency = analysis.currency || 'USD';
+        const originalCurrency = analysis.currency || 'USD';
         let exchangeRate = 1;
 
         if (originalCurrency !== 'USD') {

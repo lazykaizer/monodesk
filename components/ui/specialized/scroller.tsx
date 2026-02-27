@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/core/button-1";
+import { Button } from "@/components/ui/core/button";
 import clsx from "clsx";
 
 type TOverflowType = "x" | "y" | "both";
@@ -167,20 +167,18 @@ export const Scroller = ({
                 <div className="flex justify-center gap-2 m-[1px] z-10">
                     <Button
                         aria-label="scroll top"
-                        svgOnly
-                        shape="rounded"
-                        size="small"
-                        type="secondary"
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full w-8 h-8"
                         onClick={() => handleButtonClick("prev")}
                     >
                         <ArrowUp />
                     </Button>
                     <Button
                         aria-label="scroll bottom"
-                        svgOnly
-                        shape="rounded"
-                        size="small"
-                        type="secondary"
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full w-8 h-8"
                         onClick={() => handleButtonClick("next")}
                     >
                         <ArrowDown />
@@ -209,21 +207,19 @@ export const Scroller = ({
             {withButtons && overflow === "x" && (
                 <div className="flex gap-2 m-[1px] z-10">
                     <Button
-                        aria-label="scroll leftg"
-                        svgOnly
-                        shape="rounded"
-                        size="small"
-                        type="secondary"
+                        aria-label="scroll left"
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full w-8 h-8"
                         onClick={() => handleButtonClick("prev")}
                     >
                         <ArrowLeft />
                     </Button>
                     <Button
                         aria-label="scroll right"
-                        svgOnly
-                        shape="rounded"
-                        size="small"
-                        type="secondary"
+                        variant="outline"
+                        size="icon"
+                        className="rounded-full w-8 h-8"
                         onClick={() => handleButtonClick("next")}
                     >
                         <ArrowRight />

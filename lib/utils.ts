@@ -22,7 +22,7 @@ export function sanitizeAIText(text: string): string {
             // If it's a simple object, find the first string value that isn't empty
             const values = Object.values(parsed).filter(v => typeof v === 'string' && v.length > 0);
             if (values.length > 0) return values[0] as string;
-        } catch (e) {
+        } catch (_e) {
             // If JSON.parse fails, try regex for common key patterns or just quoted strings
             // Specifically look for values after colons, excluding common keys
             const valueMatch = cleaned.match(/:\s*"([^"]+)"/);

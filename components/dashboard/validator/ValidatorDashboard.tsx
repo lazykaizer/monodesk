@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/core/badge";
-import { Scroller } from "@/components/ui/specialized/scroller-1";
+import { Scroller } from "@/components/ui/specialized/scroller";
 
 // Types for the dashboard
 export interface AnalysisModule {

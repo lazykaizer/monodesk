@@ -173,13 +173,13 @@ export const useExportSystem = () => {
     };
 
     const handlePptStaticExport = async (container: HTMLElement, filename: string) => {
-        let pptx = new pptxgen();
+        const pptx = new pptxgen();
         const slideElements = Array.from(container.children) as HTMLElement[];
 
         for (let i = 0; i < slideElements.length; i++) {
             setExportProgress(`Exporting Slide ${i + 1}/${slideElements.length}...`);
             const imgData = await captureSlide(slideElements[i]);
-            let slide = pptx.addSlide();
+            const slide = pptx.addSlide();
             slide.background = { color: "000000" };
             slide.addImage({ data: imgData, x: 0, y: 0, w: '100%', h: '100%' });
         }
@@ -188,12 +188,12 @@ export const useExportSystem = () => {
     };
 
     const handlePptEditableExport = async (slides: SlideData[], filename: string) => {
-        let pptx = new pptxgen();
+        const pptx = new pptxgen();
         pptx.layout = 'LAYOUT_WIDE';
 
         slides.forEach((slideData, i) => {
             setExportProgress(`Mapping Data ${i + 1}/${slides.length}...`);
-            let slide = pptx.addSlide();
+            const slide = pptx.addSlide();
             slide.background = { color: "0A0A0A" }; // Dark theme default
 
             // Title

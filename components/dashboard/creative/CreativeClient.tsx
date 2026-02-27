@@ -402,7 +402,7 @@ Apply professional studio lighting and create a clean, high-end commercial photo
         if (!selectedHistoryItem || history.length <= 1) return;
         const currentIndex = history.findIndex(item => item.id === selectedHistoryItem.id);
         if (currentIndex === -1) return;
-        let nextIndex = direction === 'next' ? (currentIndex + 1) % history.length : (currentIndex - 1 + history.length) % history.length;
+        const nextIndex = direction === 'next' ? (currentIndex + 1) % history.length : (currentIndex - 1 + history.length) % history.length;
         setSelectedHistoryItem(history[nextIndex]);
     };
 
