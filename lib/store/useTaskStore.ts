@@ -7,7 +7,7 @@ export interface TaskState {
     status: TaskStatus;
     progress: number;
     loadingStep: string;
-    data: any | null;
+    data: unknown | null;
     input: string;
     timestamp: number;
     error?: string;
@@ -22,7 +22,7 @@ interface TaskStore {
     setTask: (moduleId: string, updates: Partial<TaskState>) => void;
     clearTask: (moduleId: string) => void;
     startTask: (moduleId: string, steps?: string[]) => void;
-    completeTask: (moduleId: string, data: any) => void;
+    completeTask: (moduleId: string, data: unknown) => void;
     failTask: (moduleId: string, error: string) => void;
     reset: () => void;
     syncUser: (userId: string) => void;
@@ -118,7 +118,7 @@ export const useTaskStore = create<TaskStore>()(
                         return null;
                     }
                 },
-                setItem: (name: string, value: any) => {
+                setItem: (name: string, value: unknown) => {
                     try {
                         const serialized = JSON.stringify(value);
                         // Guard: don't write if > 4MB to avoid corruption
@@ -143,8 +143,8 @@ export const useTaskStore = create<TaskStore>()(
                             // SMART PERSISTENCE:
                             // Keep moodImage (base64) ONLY if we don't have a storage link (image_url) yet.
                             // This ensures images survive refresh until they are safely uploaded.
-                            data: key === 'pitch' && value.data
-                                ? value.data.map((slide: any) =>
+                            data: key === 'pitch' && Array.isArray(value.data)
+                                ? value.data.map((slide: Record<string, unknown>) =>
                                     ({ ...slide, moodImage: slide.image_url ? null : slide.moodImage })
                                 )
                                 : key === 'creative' && value.data

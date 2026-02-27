@@ -72,7 +72,7 @@ export default function PersonaClient() {
     const groupTask = tasks['persona-group'];
 
     const [personas, setPersonas] = useState<Persona[]>([]);
-    const [selectedPersona, setSelectedPersona] = useState<Persona | null>(personaTask?.data?.persona || null);
+    const [selectedPersona, setSelectedPersona] = useState<Persona | null>((personaTask?.data as any)?.persona || null);
     const [ideaInput, setIdeaInput] = useState(personaTask?.input || "");
 
     // SYNC: Ensure local state picks up store values on navigation/refresh
@@ -80,26 +80,26 @@ export default function PersonaClient() {
         if (personaTask?.input && !ideaInput) {
             setIdeaInput(personaTask.input);
         }
-        if (personaTask?.data?.feedback && !feedback) {
-            setFeedback(personaTask.data.feedback);
+        if ((personaTask?.data as any)?.feedback && !feedback) {
+            setFeedback((personaTask.data as any).feedback);
         }
     }, [personaTask?.input, personaTask?.data]);
 
-    const [feedback, setFeedback] = useState<string>(personaTask?.data?.feedback || "");
+    const [feedback, setFeedback] = useState<string>((personaTask?.data as any)?.feedback || "");
     const [history, setHistory] = useState<any[]>([]);
 
     const [editingPersonaId, setEditingPersonaId] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [uploadingPersonaId, setUploadingPersonaId] = useState<string | null>(null);
     const [showInfo, setShowInfo] = useState(false);
-    const [feedbackPersona, setFeedbackPersona] = useState<Persona | null>(personaTask?.data?.persona || null);
+    const [feedbackPersona, setFeedbackPersona] = useState<Persona | null>((personaTask?.data as any)?.persona || null);
     const [showHistory, setShowHistory] = useState(false);
 
     const isSimulating = personaTask?.status === 'loading';
 
     // Group Simulation State
     const [isAllPersonasMode, setIsAllPersonasMode] = useState(false);
-    const [allPersonasFeedback, setAllPersonasFeedback] = useState<Array<{ persona: Persona, feedback: string }>>(groupTask?.data || []);
+    const [allPersonasFeedback, setAllPersonasFeedback] = useState<Array<{ persona: Persona, feedback: string }>>((groupTask?.data as any) || []);
     const isGroupSimulating = groupTask?.status === 'loading';
     const isLoading = isSimulating || isGroupSimulating;
 
