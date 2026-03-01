@@ -1,3 +1,4 @@
+idea validator karo ab
 # Creative Studio - Quick Reference Guide
 
 ## 🎨 Generation Modes
