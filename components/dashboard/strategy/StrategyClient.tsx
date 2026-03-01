@@ -42,22 +42,23 @@ export default function StrategyClient() {
     const task = tasks['strategy'];
 
     const [userInput, setUserInput] = useState(task?.input || "");
-    const [projectName, setProjectName] = useState(task?.data?.analysis_data?.projectName || "");
+    const taskData = task?.data as any;
+    const [projectName, setProjectName] = useState(taskData?.analysis_data?.projectName || "");
 
     // SYNC: Ensure local state picks up store values on navigation/refresh
     useEffect(() => {
         if (task?.input && !userInput) {
             setUserInput(task.input);
         }
-        if (task?.data?.analysis_data?.projectName && !projectName) {
-            setProjectName(task.data.analysis_data.projectName);
+        if (taskData?.analysis_data?.projectName && !projectName) {
+            setProjectName(taskData.analysis_data.projectName);
         }
     }, [task?.input, task?.data]);
 
     // --- STATE ---
-    const swotData = task?.data?.swot || [];
-    const generatedStrategies = task?.data?.strategies || [];
-    const commanderIntent = task?.data?.commanderIntent || "";
+    const swotData = taskData?.swot || [];
+    const generatedStrategies = taskData?.strategies || [];
+    const commanderIntent = taskData?.commanderIntent || "";
 
     const [history, setHistory] = useState<any[]>([]);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);

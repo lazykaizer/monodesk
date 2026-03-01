@@ -149,11 +149,11 @@ export const useTaskStore = create<TaskStore>()(
                                 )
                                 : key === 'creative' && value.data
                                     ? {
-                                        ...value.data,
-                                        image: value.data.image ? { ...value.data.image, image: typeof value.data.image.image === 'string' && value.data.image.image.startsWith('data:image') ? null : value.data.image.image } : null,
-                                        logo: value.data.logo ? { ...value.data.logo, image: typeof value.data.logo.image === 'string' && value.data.logo.image.startsWith('data:image') ? null : value.data.logo.image } : null,
-                                        agency: value.data.agency ? { ...value.data.agency, image: typeof value.data.agency.image === 'string' && value.data.agency.image.startsWith('data:image') ? null : value.data.agency.image } : null,
-                                        video: value.data.video ? { ...value.data.video, video: typeof value.data.video.video === 'string' && value.data.video.video.startsWith('data:') ? null : value.data.video.video } : null
+                                        ...(value.data as any),
+                                        image: (value.data as any).image ? { ...(value.data as any).image, image: typeof (value.data as any).image.image === 'string' && (value.data as any).image.image.startsWith('data:image') ? null : (value.data as any).image.image } : null,
+                                        logo: (value.data as any).logo ? { ...(value.data as any).logo, image: typeof (value.data as any).logo.image === 'string' && (value.data as any).logo.image.startsWith('data:image') ? null : (value.data as any).logo.image } : null,
+                                        agency: (value.data as any).agency ? { ...(value.data as any).agency, image: typeof (value.data as any).agency.image === 'string' && (value.data as any).agency.image.startsWith('data:image') ? null : (value.data as any).agency.image } : null,
+                                        video: (value.data as any).video ? { ...(value.data as any).video, video: typeof (value.data as any).video.video === 'string' && (value.data as any).video.video.startsWith('data:') ? null : (value.data as any).video.video } : null
                                     }
                                     : value.data,
                             deckId: value.deckId,

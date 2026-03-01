@@ -56,7 +56,7 @@ export default function TrendsClient() {
 
     // Derived states
     const isScanning = task?.status === 'loading';
-    const apiData = task?.data;
+    const apiData = task?.data as any;
 
     const fetchHistory = async () => {
         const { data: { user } } = await supabase.auth.getUser();
@@ -163,7 +163,7 @@ export default function TrendsClient() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                    {(searchTerm.trim() || apiData) && (
+                    {!!(searchTerm.trim() || apiData) && (
                         <Button
                             variant="ghost"
                             size="icon"

@@ -55,11 +55,11 @@ export default function PitchDeckArchitect() {
         selectedSlides: [] as string[]
     });
 
-    const [slides, setSlides] = useState<Slide[]>(task?.data || initialSlides);
+    const [slides, setSlides] = useState<Slide[]>((Array.isArray(task?.data) ? task.data : null) || initialSlides);
     const [activeSlide, setActiveSlide] = useState<Slide | null>(null);
     const isGenerating = task?.status === 'loading';
-    const [isComplete, setIsComplete] = useState(task?.status === 'success' || (task?.data && task.data.length > 0));
-    const [startupName, setStartupName] = useState(task?.data?.[0]?.title || "");
+    const [isComplete, setIsComplete] = useState(task?.status === 'success' || (Array.isArray(task?.data) && task.data.length > 0));
+    const [startupName, setStartupName] = useState(Array.isArray(task?.data) ? task.data[0]?.title : "");
     const [currentDeckId, setCurrentDeckId] = useState<string | null>(task?.deckId || null);
     const currentDeckIdRef = useRef<string | null>(task?.deckId || null); // Synchronous ref for background uploads
     const [generatingImages, setGeneratingImages] = useState<Record<number, boolean>>({});
@@ -162,11 +162,12 @@ export default function PitchDeckArchitect() {
         }
 
         // Case B: Generation succeeded but local state is empty (Refresh scenario)
-        if (slidesRef.current.length === 0 && task?.data && task.data.length > 0) {
-            console.log("Hydrating slides from store...", task.data.length);
+        if (slidesRef.current.length === 0 && Array.isArray(task?.data) && task.data.length > 0) {
+            const taskData = task.data as Slide[];
+            console.log("Hydrating slides from store...", taskData.length);
 
             // Check if we need to reconcile with DB (due to image stripping in store)
-            const needsReconcile = task.deckId && task.data.some((s: any) => !s.moodImage && !s.image_url);
+            const needsReconcile = task.deckId && taskData.some((s: any) => !s.moodImage && !s.image_url);
 
             if (needsReconcile && task.deckId) {
                 console.log("Images missing in local cache, fetching full record from Supabase...");
@@ -188,17 +189,17 @@ export default function PitchDeckArchitect() {
                     setIsHydrating(false);
                     isHydratedRef.current = true;
                     // Fallback to stripped data
-                    setSlides(task.data);
-                    setActiveSlide(task.data[0]);
+                    setSlides(taskData);
+                    setActiveSlide(taskData[0]);
                 });
             } else {
-                setSlides(task.data);
-                setStartupName(task.data?.[0]?.title || "");
+                setSlides(taskData);
+                setStartupName(taskData?.[0]?.title || "");
                 isHydratedRef.current = true;
 
                 // Restore active slide from store
                 const storedActiveId = task.activeSlideId;
-                const restoredActive = task.data.find((s: any) => String(s.id) === String(storedActiveId)) || task.data[0];
+                const restoredActive = taskData.find((s: any) => String(s.id) === String(storedActiveId)) || taskData[0];
                 setActiveSlide(restoredActive);
             }
 
@@ -215,7 +216,7 @@ export default function PitchDeckArchitect() {
             } else {
                 setViewMode('editor');
             }
-        } else if (slidesRef.current.length === 0 && (!task?.data || task.data.length === 0) && (task?.status as string) !== 'loading' && !isCompleteRef.current) {
+        } else if (slidesRef.current.length === 0 && (!task?.data || (Array.isArray(task.data) && task.data.length === 0)) && (task?.status as string) !== 'loading' && !isCompleteRef.current) {
             // Only switch to history if we genuinely have no data, aren't loading, and aren't complete
             if (!task?.viewMode || task.viewMode === 'history') {
                 setViewMode('history');
