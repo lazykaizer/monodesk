@@ -6,6 +6,7 @@ import RoadmapSidebar from "@/components/dashboard/roadmap/RoadmapSidebar";
 import { usePathname, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
+import SynapseBackground from "@/components/ui/core/synapse-background";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
@@ -33,7 +34,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         );
     }
 
-    return (
+    const layout = (
         <div className={cn(
             "h-screen flex flex-col bg-[#050505] text-white transition-colors duration-300 relative overflow-hidden",
             isRoadmap && "bg-[#191919]",
@@ -73,6 +74,12 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             </div>
         </div>
     );
+
+    if (isValidator) {
+        return <SynapseBackground className="bg-[#050505]">{layout}</SynapseBackground>;
+    }
+
+    return layout;
 }
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
