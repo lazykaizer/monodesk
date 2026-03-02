@@ -418,11 +418,15 @@ export default function ValidatorClient() {
 
             if ('error' in data && data.error) throw new Error(data.message as string);
 
-            let finalResult = data as AnalysisResult;
+            let finalResult = {
+                ...data as AnalysisResult,
+                analysis_mode: analysisMode // Store mode for history reference
+            };
 
             // ADAPTER: The new Cynical VC prompt returns a flat object, but the UI expects nested `dashboard_summary`
             if (!finalResult.dashboard_summary && (data as any).verdict) {
                 finalResult = {
+                    ...finalResult,
                     dashboard_summary: data as any,
                     modules_analysis: []
                 };
@@ -748,7 +752,10 @@ export default function ValidatorClient() {
                                 </div>
                             )}
                             {history.map((item) => {
-                                const isDeep = !item.validation_report?.dashboard_summary;
+                                const report = item.validation_report;
+                                const savedMode = report?.analysis_mode || (report?.dashboard_summary && !report.modules_analysis?.length ? 'deep' : 'dashboard');
+                                const isDeep = savedMode === 'deep';
+
                                 const modeColor = isDeep ? "text-amber-400" : "text-blue-400";
                                 const modeBorder = isDeep ? "group-hover:border-amber-500/30" : "group-hover:border-blue-500/30";
                                 const modeLabel = isDeep ? "Deep Dive" : "Dashboard";
@@ -759,6 +766,11 @@ export default function ValidatorClient() {
                                         onClick={() => {
                                             setIdea(item.description);
                                             setTask('validator', { data: item.validation_report, status: 'success', input: item.description, progress: 100 });
+
+                                            // Restore analysis mode and view
+                                            const newMode = item.validation_report?.analysis_mode || (isDeep ? 'deep' : 'dashboard');
+                                            setAnalysisMode(newMode);
+                                            setViewMode(newMode === 'deep' ? 'detailed' : 'overview');
 
                                             // Reconstruct displayed modules from the saved report to "freeze" the view
                                             const savedModules = item.validation_report?.modules_analysis?.map((m: any) => m.title) || [];
