@@ -6,14 +6,16 @@ import {
     ArrowRight, Sparkles, MoreHorizontal, TrendingUp, X, Save,
     History as HistoryIcon, Trash2, Search, RefreshCw,
     ChevronDown, Check, LayoutGrid, ListTodo, Clipboard, ChevronUp,
-    Crosshair, Terminal, Rocket
+    Crosshair, Terminal, Rocket, Loader2
 } from 'lucide-react';
 import { generateDetailedStrategicAnalysis } from "@/app/actions/gemini";
+import { fetchStrategyHistory, saveStrategyToHistory, deleteStrategyFromHistory } from "@/app/actions/strategy";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/core/button";
 import { Badge } from "@/components/ui/core/badge";
 import { ScrollArea } from "@/components/ui/core/scroll-area";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { useTaskStore } from "@/lib/store/useTaskStore";
 import { useProjectStore } from "@/lib/store/useProjectStore";
 import ProjectSyncButton from "@/components/dashboard/layout/ProjectSyncButton";
@@ -69,20 +71,26 @@ export default function StrategyClient() {
     const isAnalyzing = task?.status === 'loading';
 
     const fetchHistory = async () => {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data, error } = await supabase
-            .from('strategies')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-
-        if (!error && data) setHistory(data);
+        try {
+            const data = await fetchStrategyHistory();
+            setHistory(data);
+        } catch (error) {
+            console.error("fetchHistory Error:", error);
+            // Don't toast error on mount, just log it.
+        }
     };
 
     useEffect(() => {
         fetchHistory();
+
+        // Listen for auth changes to refresh history
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            if (session) {
+                fetchHistory();
+            }
+        });
+
+        return () => subscription.unsubscribe();
     }, []);
 
     // Auto-hydration from history removed to prevent "ghost" data on refresh.
@@ -106,8 +114,14 @@ export default function StrategyClient() {
 
     const deleteFromHistory = async (e: React.MouseEvent, id: string) => {
         e.stopPropagation();
-        const { error } = await supabase.from('strategies').delete().eq('id', id);
-        if (!error) fetchHistory();
+        try {
+            await deleteStrategyFromHistory(id);
+            toast.success("Strategy purged from cache.");
+            fetchHistory();
+        } catch (error) {
+            console.error("Delete failed:", error);
+            toast.error("Deletion failed.");
+        }
     };
 
     const handleClear = () => {
@@ -155,22 +169,24 @@ export default function StrategyClient() {
             if (user) {
                 const name = input.substring(0, 30).toUpperCase();
                 setProjectName(name);
-                await supabase.from('strategies').insert({
-                    user_id: user.id,
+
+                // Save strategy silently in background
+                saveStrategyToHistory({
                     project_name: name,
                     swot_analysis: newSwot,
                     lean_canvas_data: data.strategies,
-                    analysis_data: data // Save full data for commanderIntent
+                    analysis_data: data
+                }).then(() => {
+                    fetchHistory();
+                }).catch((err: any) => {
+                    console.error("Strategy background save failed:", err);
                 });
-                fetchHistory();
+            } else {
+                toast.warning("Logged out: Strategy won't be saved to history.");
             }
-
-        } catch (error) {
-            const currentStatus = useTaskStore.getState().tasks['strategy']?.status;
-            if (currentStatus === 'loading') {
-                console.error("Analysis failed:", error);
-                failTask('strategy', "Analysis failed.");
-            }
+        } catch (error: any) {
+            failTask('strategy', "Analysis failed.");
+            toast.error("Analysis process failed: " + (error?.message || "Internal error"));
         }
     };
 
