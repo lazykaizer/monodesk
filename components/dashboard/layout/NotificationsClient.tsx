@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 interface Notification {
     id: string;
@@ -22,6 +23,7 @@ export default function NotificationsClient() {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const supabase = createClient();
+    const router = useRouter();
 
     useEffect(() => {
         const fetchAllNotifications = async () => {
@@ -54,12 +56,12 @@ export default function NotificationsClient() {
             {/* Header */}
             <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-4">
-                    <Link
-                        href="/dashboard"
+                    <button
+                        onClick={() => router.back()}
                         className="p-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
                     >
                         <ArrowLeft size={20} className="text-white/70" />
-                    </Link>
+                    </button>
                     <div>
                         <h1 className="text-2xl font-bold text-white">Notifications</h1>
                         <p className="text-sm text-white/40">Manage your system updates and activity history</p>

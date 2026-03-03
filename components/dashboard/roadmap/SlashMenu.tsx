@@ -50,11 +50,12 @@ export const SlashMenu = ({ position, onClose, targetIndex, parentId, triggerBlo
         const targetBlock = triggerBlockId ? blocks.find(b => b.id === triggerBlockId) : null;
         let content = targetBlock?.content || '';
 
-        // Remove the slash and query from the content
-        if (content.includes('/')) {
-            const parts = content.split('/');
-            parts.pop(); // Remove the last part (the query)
-            content = parts.join('/').trim();
+        // Remove trigger char (/ or .) and following query from content
+        const lastSlash = content.lastIndexOf('/');
+        const lastDot = content.lastIndexOf('.');
+        const triggerPos = Math.max(lastSlash, lastDot);
+        if (triggerPos !== -1) {
+            content = content.slice(0, triggerPos).trim();
         }
 
         if (['database', 'board-view', 'calendar-view', 'chart-view'].includes(cmd.type)) {

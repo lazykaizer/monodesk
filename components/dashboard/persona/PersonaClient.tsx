@@ -24,7 +24,8 @@ import {
     Save,
     Download,
     FileDown,
-    Rocket
+    Rocket,
+    ArrowLeft
 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -117,6 +118,24 @@ export default function PersonaClient() {
 
     // PHASE 4: Undo Delete State
     const [deletedPersona, setDeletedPersona] = useState<{ persona: Persona, timeoutId: NodeJS.Timeout } | null>(null);
+
+    // Mobile-only: edit name modal
+    const [mobileEditNameOpen, setMobileEditNameOpen] = useState(false);
+    const [mobileEditNameValue, setMobileEditNameValue] = useState("");
+    const [mobileEditNameTargetId, setMobileEditNameTargetId] = useState<string | null>(null);
+    // Mobile-only: persona action sheet
+    const [mobilePersonaActionTarget, setMobilePersonaActionTarget] = useState<Persona | null>(null);
+
+    const handleMobileSaveName = async () => {
+        if (!mobileEditNameTargetId || !mobileEditNameValue.trim()) return;
+        const trimmed = mobileEditNameValue.trim();
+        handleNameChange(mobileEditNameTargetId, trimmed);
+        setSelectedPersona(prev => prev?.id === mobileEditNameTargetId ? { ...prev, name: trimmed } : prev);
+        await supabase.from('personas').update({ name: trimmed }).eq('id', mobileEditNameTargetId);
+        setMobileEditNameOpen(false);
+        setMobileEditNameTargetId(null);
+        toast.success("Name updated");
+    };
 
     const handleClear = () => {
         setTask('persona', { status: 'idle', data: null, input: "", progress: 0 });
@@ -494,7 +513,9 @@ export default function PersonaClient() {
     };
 
     return (
-        <div className="flex min-h-screen w-full bg-black text-white font-sans border-t border-white/5">
+        <>
+        {/* ── DESKTOP ── */}
+        <div className="hidden lg:flex min-h-screen w-full bg-black text-white font-sans border-t border-white/5">
 
             {/* COLUMN 1: PERSONA MANAGER (Left Sidebar) */}
             <div className="w-80 border-r border-white/5 flex flex-col bg-[#050505]">
@@ -1007,12 +1028,20 @@ export default function PersonaClient() {
 
             {/* Add Persona Modal */}
             <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-                <DialogContent className="bg-zinc-950 border-white/10 text-white sm:max-w-md">
+                <DialogContent className="bg-zinc-950 border-white/10 text-white sm:max-w-md [&>button]:hidden lg:[&>button]:flex">
                     <DialogHeader>
-                        <DialogTitle className="text-center flex items-center justify-center gap-2">
-                            <Plus size={20} className="text-blue-500" />
-                            Create New Persona
-                        </DialogTitle>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={() => setIsAddModalOpen(false)}
+                                className="lg:hidden p-2 rounded-xl bg-white/5 border border-white/10 text-zinc-400 hover:text-white transition-all shrink-0"
+                            >
+                                <ArrowLeft size={16} />
+                            </button>
+                            <DialogTitle className="flex items-center gap-2 lg:justify-center lg:w-full">
+                                <Plus size={20} className="text-blue-500" />
+                                Create New Persona
+                            </DialogTitle>
+                        </div>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="flex justify-center mb-4">
@@ -1174,5 +1203,394 @@ export default function PersonaClient() {
                 </DialogContent>
             </Dialog>
         </div >
+
+        {/* ── MOBILE ── */}
+        <div className="flex lg:hidden flex-col w-full bg-black text-white font-sans pb-64">
+
+            {/* Mobile Header */}
+            <div className="flex items-center justify-between px-4 pt-3 pb-2 border-b border-white/5">
+                <div>
+                    <h1 className="text-sm font-bold text-white tracking-wide uppercase">Simulation Lab</h1>
+                    <p className="text-[10px] text-zinc-500 font-mono">AI-POWERED PERSONA FEEDBACK</p>
+                </div>
+                <div className="flex items-center gap-2">
+                    <ProjectSyncButton module="persona" data={isAllPersonasMode ? allPersonasFeedback : feedback} disabled={isAllPersonasMode ? (!allPersonasFeedback || allPersonasFeedback.length === 0) : !feedback} className="scale-90" context={{ name: ideaInput.slice(0, 50), description: ideaInput }} />
+                    <button onClick={() => setShowHistory(true)} className="p-2 rounded-lg text-zinc-500 hover:text-white bg-white/5 border border-white/10 transition-all">
+                        <History size={16} />
+                    </button>
+                </div>
+            </div>
+
+            {/* Persona Horizontal Scroll */}
+            <div className="px-4 pt-3 pb-2">
+                <div className="flex items-center justify-between mb-2">
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold">Select Persona</p>
+                    <button
+                        onClick={() => setShowInfo(true)}
+                        className="flex items-center gap-1 text-[10px] text-zinc-500 hover:text-pink-400 uppercase font-bold tracking-widest border border-white/10 rounded-md px-2 py-1 hover:border-pink-500/30 transition-all"
+                    >
+                        <Info size={11} /> View Details
+                    </button>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
+                    {/* Individual persona chips */}
+                    {personas.map(p => (
+                        <button
+                            key={p.id}
+                            onClick={() => { setSelectedPersona(p); setIsAllPersonasMode(false); }}
+                            className={cn(
+                                "shrink-0 flex flex-col items-center gap-1 transition-all",
+                                selectedPersona?.id === p.id ? "opacity-100" : "opacity-50"
+                            )}
+                        >
+                            <Avatar className={cn(
+                                "w-12 h-12 border-2 transition-all",
+                                selectedPersona?.id === p.id
+                                    ? "border-cyan-500 shadow-[0_0_12px_rgba(6,182,212,0.5)]"
+                                    : "border-white/10"
+                            )}>
+                                <AvatarImage src={p.avatar_url} alt={p.name} className="object-cover" />
+                                <AvatarFallback className="bg-zinc-800 text-white/70 text-xs font-bold">{p.name[0]}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-[9px] text-zinc-400 font-bold uppercase w-14 text-center truncate">{p.name}</span>
+                        </button>
+                    ))}
+
+                    {/* All Personas chip — after individual personas, before Add */}
+                    <button
+                        onClick={() => { setIsAllPersonasMode(true); setSelectedPersona(null); }}
+                        className={cn(
+                            "shrink-0 flex flex-col items-center gap-1 transition-all",
+                            isAllPersonasMode ? "opacity-100" : "opacity-50"
+                        )}
+                    >
+                        <div className={cn(
+                            "w-12 h-12 rounded-full flex items-center justify-center border-2 transition-all",
+                            isAllPersonasMode ? "border-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.5)] bg-blue-500/20" : "border-white/10 bg-zinc-900"
+                        )}>
+                            <Users size={18} className="text-blue-400" />
+                        </div>
+                        <span className="text-[9px] text-zinc-400 font-bold uppercase w-14 text-center truncate">All</span>
+                    </button>
+
+                    {/* Add persona chip — always last */}
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="shrink-0 flex flex-col items-center gap-1 opacity-50 hover:opacity-100 transition-all"
+                    >
+                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-white/20 bg-zinc-900 flex items-center justify-center">
+                            <Plus size={18} className="text-zinc-500" />
+                        </div>
+                        <span className="text-[9px] text-zinc-500 font-bold uppercase w-14 text-center">Add</span>
+                    </button>
+
+                    {/* Settings chip — opens action sheet for selected persona */}
+                    {selectedPersona && !isAllPersonasMode && (
+                        <button
+                            onClick={() => setMobilePersonaActionTarget(selectedPersona)}
+                            className="shrink-0 flex flex-col items-center gap-1 transition-all opacity-80 hover:opacity-100"
+                        >
+                            <div className="w-12 h-12 rounded-full border-2 border-zinc-600 bg-zinc-800 flex items-center justify-center">
+                                <MoreHorizontal size={18} className="text-zinc-400" />
+                            </div>
+                            <span className="text-[9px] text-zinc-500 font-bold uppercase w-14 text-center">Manage</span>
+                        </button>
+                    )}
+                </div>
+
+                {/* Persona action bottom sheet */}
+                {mobilePersonaActionTarget && (
+                    <div className="fixed inset-0 z-[400] flex flex-col justify-end" onClick={() => setMobilePersonaActionTarget(null)}>
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+                        <div className="relative bg-zinc-900 border-t border-white/10 rounded-t-2xl p-4 space-y-2 animate-in slide-in-from-bottom duration-200" onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center gap-3 pb-2 border-b border-white/10 mb-1">
+                                <Avatar className="w-9 h-9 border border-white/10">
+                                    <AvatarImage src={mobilePersonaActionTarget.avatar_url} />
+                                    <AvatarFallback className="bg-zinc-800 text-xs font-bold">{mobilePersonaActionTarget.name[0]}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="text-sm font-bold text-white">{mobilePersonaActionTarget.name}</p>
+                                    <p className="text-[10px] text-zinc-500">{mobilePersonaActionTarget.role}</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => { setMobileEditNameValue(mobilePersonaActionTarget.name); setMobileEditNameTargetId(mobilePersonaActionTarget.id); setMobileEditNameOpen(true); setMobilePersonaActionTarget(null); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-zinc-300 bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+                            >
+                                <Pencil size={16} /> Edit Name
+                            </button>
+                            <button
+                                onClick={() => { setUploadingPersonaId(mobilePersonaActionTarget.id); fileInputRef.current?.click(); setMobilePersonaActionTarget(null); }}
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-zinc-300 bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+                            >
+                                <Camera size={16} /> Change Photo
+                            </button>
+                            <button
+                                onClick={(e) => { handleDeletePersona(e, mobilePersonaActionTarget.id); setMobilePersonaActionTarget(null); }}
+                                className={cn(
+                                    "w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all",
+                                    mobilePersonaActionTarget.is_system
+                                        ? "text-zinc-600 bg-zinc-800/50 border border-white/5 cursor-not-allowed opacity-40"
+                                        : "text-red-400 bg-red-500/5 border border-red-500/20 hover:bg-red-500/10"
+                                )}
+                                disabled={!!mobilePersonaActionTarget.is_system}
+                            >
+                                <Trash2 size={16} /> Delete Persona
+                            </button>
+                            <button onClick={() => setMobilePersonaActionTarget(null)} className="w-full py-3 text-xs text-zinc-500 font-bold uppercase tracking-widest">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Results Area */}
+            {(isLoading || feedback || allPersonasFeedback.length > 0) && (
+                <div className="px-4 pb-4 space-y-4 animate-in fade-in duration-300">
+                    <div className="h-px bg-white/5 mx-1" />
+
+                    {(feedback || allPersonasFeedback.length > 0) && !isLoading && (
+                        <div className="flex items-center justify-between">
+                            <span className="text-[10px] text-zinc-600 uppercase tracking-widest font-bold font-mono">Simulation Output</span>
+                            <button
+                                onClick={handleClear}
+                                className="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-400/10 transition-all border border-white/5"
+                                title="Clear output"
+                            >
+                                <X size={14} />
+                            </button>
+                        </div>
+                    )}
+
+                    {isLoading && (
+                        <div className="space-y-3 p-4 bg-zinc-900/40 rounded-xl border border-white/5">
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-full bg-zinc-800 animate-pulse" />
+                                <div className="space-y-1.5 flex-1">
+                                    <div className="h-2.5 w-28 bg-zinc-800 rounded animate-pulse" />
+                                    <div className="h-2 w-20 bg-zinc-800 rounded animate-pulse" />
+                                </div>
+                            </div>
+                            <div className="space-y-1.5">
+                                <div className="h-2 w-full bg-zinc-800 rounded animate-pulse" />
+                                <div className="h-2 w-5/6 bg-zinc-800 rounded animate-pulse" />
+                                <div className="h-2 w-4/6 bg-zinc-800 rounded animate-pulse" />
+                            </div>
+                            <p className="text-[10px] text-blue-500 font-mono text-center animate-pulse">
+                                {personaTask?.loadingStep || groupTask?.loadingStep || "SIMULATING..."}
+                            </p>
+                        </div>
+                    )}
+
+                    {feedback && feedbackPersona && !isLoading && (
+                        <div className="animate-in fade-in duration-500">
+                            <FeedbackCard
+                                persona={feedbackPersona}
+                                feedback={feedback}
+                                onDownload={() => handleExportPDF(feedbackPersona.name, feedback)}
+                            />
+                        </div>
+                    )}
+
+                    {allPersonasFeedback.length > 0 && !isLoading && (
+                        <div className="space-y-4 animate-in fade-in duration-500">
+                            <button
+                                onClick={() => { setHistoryExportItem(null); setIsExportChoicesOpen(true); }}
+                                className="w-full flex items-center justify-center gap-2 py-2 rounded-xl border border-blue-500/20 bg-blue-500/5 text-blue-400 text-xs font-bold uppercase tracking-widest hover:bg-blue-500/10 transition-all"
+                            >
+                                <FileDown size={14} /> Download All Feedback
+                            </button>
+                            {allPersonasFeedback.map(({ persona, feedback: fb }, i) => (
+                                <div key={persona.id} className="animate-in fade-in duration-500" style={{ animationDelay: `${i * 80}ms` }}>
+                                    <FeedbackCard persona={persona} feedback={fb} onDownload={() => handleExportPDF(persona.name, fb)} />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+
+        {/* Mobile Input + Run — fixed above footer nav */}
+        <div className="lg:hidden fixed bottom-20 left-0 right-0 z-100 px-4 pb-3 pt-3 bg-zinc-950/95 backdrop-blur-xl border-t border-white/5">
+            {currentProject && !ideaInput && (
+                <button
+                    onClick={() => setIdeaInput(currentProject.description || currentProject.name)}
+                    className="w-full mb-1.5 flex items-center gap-2 px-3 py-2 bg-blue-600/10 border border-blue-500/20 rounded-xl hover:bg-blue-600/20 transition-all"
+                >
+                    <div className="w-6 h-6 rounded-md bg-blue-600 flex items-center justify-center shrink-0">
+                        <Rocket size={12} />
+                    </div>
+                    <div className="text-left min-w-0">
+                        <p className="text-[9px] text-blue-400 font-black uppercase tracking-widest">Use Project</p>
+                        <p className="text-xs font-bold text-white truncate">{currentProject.name}</p>
+                    </div>
+                </button>
+            )}
+            <div className="relative bg-zinc-900/60 border border-white/10 rounded-t-xl overflow-hidden focus-within:ring-2 focus-within:ring-cyan-500/50 transition-all">
+                <textarea
+                    className="w-full h-24 bg-transparent border-none p-3 text-gray-300 resize-none focus:outline-none font-mono text-sm leading-relaxed placeholder:text-zinc-600"
+                    placeholder="> Enter your concept or product idea..."
+                    value={ideaInput}
+                    onChange={(e) => setIdeaInput(e.target.value)}
+                    spellCheck={false}
+                />
+                <div className="absolute bottom-2 right-3 text-zinc-600 text-[10px] font-mono">
+                    {ideaInput.length} chars
+                </div>
+            </div>
+            <button
+                onClick={isAllPersonasMode ? handleGroupSimulate : handleSimulate}
+                disabled={isLoading || !ideaInput.trim() || (!selectedPersona && !isAllPersonasMode)}
+                className={cn(
+                    "w-full h-11 rounded-b-xl font-bold text-sm flex items-center justify-center gap-2 transition-all",
+                    isLoading
+                        ? "bg-blue-600/50 text-white/70 cursor-not-allowed"
+                        : (!ideaInput.trim() || (!selectedPersona && !isAllPersonasMode))
+                            ? "bg-zinc-800 text-zinc-500 cursor-not-allowed border-x border-b border-white/5"
+                            : "bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)]"
+                )}
+            >
+                {isLoading ? (
+                    <><Sparkles size={18} className="animate-spin" /> Simulating...</>
+                ) : (
+                    <><Play size={18} fill="currentColor" /> Run Simulation</>
+                )}
+            </button>
+        </div>
+
+        {/* Mobile Info / AnimatedTestimonials Overlay */}
+        {showInfo && (
+            <>
+            {/* Floating back button — above TopBar */}
+            <button
+                onClick={() => setShowInfo(false)}
+                className="lg:hidden fixed top-3 left-3 z-[9999] flex items-center gap-1.5 text-white font-bold text-base"
+            >
+                <ArrowLeft size={20} strokeWidth={3} />
+                <span>Back</span>
+            </button>
+            <div className="lg:hidden fixed inset-0 z-[300] bg-black flex flex-col animate-in fade-in duration-300">
+                <div className="flex-1 flex items-center justify-center overflow-hidden pt-16">
+                    {personas.length > 0 ? (
+                        <AnimatedTestimonials
+                            testimonials={personas.map(p => ({
+                                quote: p.bio,
+                                name: p.name,
+                                designation: p.role,
+                                src: p.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name}`
+                            }))}
+                            autoplay={false}
+                        />
+                    ) : (
+                        <p className="text-zinc-500 font-mono text-sm">No personas yet. Add one first.</p>
+                    )}
+                </div>
+            </div>
+            </>
+        )}
+
+        {/* Mobile Edit Name Modal */}
+        {mobileEditNameOpen && (
+            <div className="lg:hidden fixed inset-0 z-200 flex items-end">
+                <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setMobileEditNameOpen(false)} />
+                <div className="relative w-full bg-zinc-950 border-t border-white/10 rounded-t-2xl p-5 animate-in slide-in-from-bottom duration-300">
+                    <h3 className="text-sm font-bold text-white uppercase tracking-wide mb-4">Edit Persona Name</h3>
+                    <input
+                        autoFocus
+                        value={mobileEditNameValue}
+                        onChange={(e) => setMobileEditNameValue(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleMobileSaveName(); if (e.key === 'Escape') setMobileEditNameOpen(false); }}
+                        className="w-full bg-zinc-900 border border-white/10 rounded-xl px-4 py-3 text-white text-sm font-mono focus:outline-none focus:border-cyan-500/50 mb-4"
+                        placeholder="Enter new name..."
+                    />
+                    <div className="flex gap-3">
+                        <button onClick={() => setMobileEditNameOpen(false)} className="flex-1 py-3 rounded-xl border border-white/10 text-zinc-400 text-sm font-bold uppercase tracking-widest">Cancel</button>
+                        <button onClick={handleMobileSaveName} className="flex-1 py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold uppercase tracking-widest transition-all">Save</button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* Mobile History Overlay */}
+        {showHistory && (
+            <div className="lg:hidden fixed inset-0 z-150 flex justify-end">
+                <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowHistory(false)} />
+                <div className="relative w-80 h-full bg-zinc-950 border-l border-white/10 flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+                    <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                                <History size={16} className="text-blue-400" />
+                            </div>
+                            <div>
+                                <h2 className="font-bold text-sm text-white uppercase tracking-wide">History</h2>
+                                <p className="text-[10px] text-zinc-500 uppercase tracking-widest">Previous Sessions</p>
+                            </div>
+                        </div>
+                        <button onClick={() => setShowHistory(false)} className="p-2 rounded-full hover:bg-white/5 text-zinc-500 hover:text-white transition-all">
+                            <X size={18} />
+                        </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-3 space-y-3 [&::-webkit-scrollbar]:hidden">
+                        {history.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-40 text-zinc-600 gap-2">
+                                <History size={24} className="opacity-20" />
+                                <p className="text-xs font-mono text-center">No history yet</p>
+                            </div>
+                        ) : history.map((item) => (
+                            <div key={item.id} className="p-3 bg-zinc-900/50 border border-white/5 rounded-xl group/item">
+                                <div className="flex items-center justify-between mb-2 text-[10px] font-mono text-zinc-500 uppercase">
+                                    <span>{item.persona_name}</span>
+                                    <span>{new Date(item.created_at).toLocaleDateString()}</span>
+                                </div>
+                                <p className="text-xs text-white/50 italic border-l border-white/10 pl-2 mb-2 line-clamp-2">"{item.prompt}"</p>
+                                <p className="text-xs text-zinc-300 leading-relaxed line-clamp-3">{parseFeedback(item.response || "")}</p>
+                                <div className="mt-2 flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            setIdeaInput(item.prompt);
+                                            setFeedback(item.response);
+                                            const p = personas.find(pers => pers.name === item.persona_name);
+                                            if (p) { setSelectedPersona(p); setFeedbackPersona(p); setIsAllPersonasMode(false); }
+                                            setShowHistory(false);
+                                        }}
+                                        className="flex-1 py-1.5 text-[10px] uppercase font-bold text-zinc-500 hover:text-white border border-white/5 rounded-lg hover:bg-white/5 transition-all"
+                                    >
+                                        Recall
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            if (item.persona_name === "Group Session" && item.full_result) {
+                                                setHistoryExportItem(item);
+                                                setIsExportChoicesOpen(true);
+                                            } else {
+                                                handleExportPDF(item.persona_name, item.response);
+                                            }
+                                        }}
+                                        className="px-3 py-1.5 text-zinc-500 hover:text-blue-400 border border-white/5 rounded-lg hover:bg-blue-500/10 transition-all"
+                                        title="Download PDF"
+                                    >
+                                        <Download size={12} />
+                                    </button>
+                                    <button
+                                        onClick={async () => {
+                                            const { error } = await supabase.from('persona_tests').delete().eq('id', item.id);
+                                            if (!error) { fetchHistory(); toast.success("Deleted"); }
+                                            else toast.error("Failed to delete");
+                                        }}
+                                        className="px-3 py-1.5 text-zinc-500 hover:text-red-400 border border-white/5 rounded-lg hover:bg-red-500/10 transition-all"
+                                        title="Delete"
+                                    >
+                                        <Trash2 size={12} />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     );
 }

@@ -215,7 +215,7 @@ export const RoadmapCopilot = () => {
     );
 
     return (
-        <div className="fixed bottom-6 right-6 z-[1000] flex flex-col items-end gap-4">
+        <div className="fixed bottom-24 lg:bottom-6 right-4 lg:right-6 z-[1000] flex flex-col items-end gap-4">
             {/* CHAT WINDOW */}
             <AnimatePresence>
                 {isOpen && (
@@ -234,7 +234,7 @@ export const RoadmapCopilot = () => {
                             top: -(windowSize.height - 550 - 24),
                             bottom: 24
                         }}
-                        className="w-96 h-[550px] bg-[#0f0f0f] border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden backdrop-blur-xl"
+                        className="w-[calc(100vw-2rem)] lg:w-96 h-[480px] lg:h-[550px] bg-[#0f0f0f] border border-white/10 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col overflow-hidden backdrop-blur-xl"
                     >
                         {/* HEADER - Drag Trigger */}
                         <div

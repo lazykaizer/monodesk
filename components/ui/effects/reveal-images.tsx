@@ -12,9 +12,10 @@ interface ShowImageListItemProps {
     text: string;
     images: [ImageSource, ImageSource];
     onClick?: () => void;
+    textClassName?: string;
 }
 
-function RevealImageListItem({ text, images, onClick }: ShowImageListItemProps) {
+function RevealImageListItem({ text, images, onClick, textClassName = "text-7xl font-black" }: ShowImageListItemProps) {
     const container = "absolute right-8 -top-1 z-40 h-20 w-16";
     const effect =
         "relative duration-500 delay-100 shadow-none group-hover:shadow-xl scale-0 group-hover:scale-100 opacity-0 group-hover:opacity-100 group-hover:w-full group-hover:h-full w-16 h-16 overflow-hidden transition-all rounded-md";
@@ -24,7 +25,7 @@ function RevealImageListItem({ text, images, onClick }: ShowImageListItemProps) 
             onClick={onClick}
             className="group relative h-fit w-fit overflow-visible py-8 cursor-pointer active:scale-95 transition-transform"
         >
-            <h1 className="text-7xl font-black text-foreground transition-all duration-500 group-hover:opacity-40 select-none">
+            <h1 className={`${textClassName} text-foreground transition-all duration-500 group-hover:opacity-40 select-none`}>
                 {text}
             </h1>
             <div className={container}>
@@ -46,7 +47,7 @@ function RevealImageListItem({ text, images, onClick }: ShowImageListItemProps) 
     );
 }
 
-export function RevealImageList() {
+export function RevealImageList({ textClassName }: { textClassName?: string } = {}) {
 
     // Future: This could be fetched from Supabase
     // const { data: services } = await supabase.from('services').select('*');
@@ -163,7 +164,8 @@ export function RevealImageList() {
             {items.map((item, index) => (
                 <RevealImageListItem
                     key={index}
-                    {...item} // Spread id, text, images
+                    {...item}
+                    textClassName={textClassName}
                     onClick={() => handleServiceClick(item.id || item.text.toLowerCase().replace(/\s/g, '-'), item.text)}
                 />
             ))}

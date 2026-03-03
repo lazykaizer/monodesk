@@ -899,7 +899,7 @@ Return strict JSON:
         return responseText;
     } catch (error) {
         console.error("Persona simulation failed:", error);
-        throw error;
+        throw new Error(error instanceof Error ? error.message : String(error));
     }
 }
 export async function simulateGroupFeedback(personas: any[], idea: string) {

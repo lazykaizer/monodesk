@@ -22,11 +22,13 @@ interface TimelineItem {
 interface RadialOrbitalTimelineProps {
     timelineData: TimelineItem[];
     onItemClick?: (item: TimelineItem) => void;
+    radius?: number;
 }
 
 export default function RadialOrbitalTimeline({
     timelineData: initialData,
-    onItemClick
+    onItemClick,
+    radius: orbitRadius = 200
 }: RadialOrbitalTimelineProps) {
     const router = useRouter();
     // We keep local state for items to support future realtime energy updates from backend, 
@@ -133,7 +135,7 @@ export default function RadialOrbitalTimeline({
 
     const calculateNodePosition = (index: number, total: number) => {
         const angle = ((index / total) * 360 + rotationAngle) % 360;
-        const radius = 200;
+        const radius = orbitRadius;
         const radian = (angle * Math.PI) / 180;
 
         const x = radius * Math.cos(radian) + centerOffset.x;
@@ -183,7 +185,10 @@ export default function RadialOrbitalTimeline({
                         <div className="w-8 h-8 rounded-full bg-white/80 backdrop-blur-md"></div>
                     </div>
 
-                    <div className="absolute w-96 h-96 rounded-full border border-white/10"></div>
+                    <div
+                        className="absolute rounded-full border border-white/10"
+                        style={{ width: orbitRadius * 2, height: orbitRadius * 2 }}
+                    ></div>
 
                     {items.map((item, index) => {
                         const position = calculateNodePosition(index, items.length);

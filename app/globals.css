@@ -39,6 +39,14 @@ body {
 }
 
 /* Utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 @utility glass-panel {
   backdrop-filter: blur(24px);
   background-color: rgba(255, 255, 255, 0.05);

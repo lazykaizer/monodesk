@@ -5,12 +5,10 @@ import { Suspense } from "react";
 
 export default function FinancePage() {
     return (
-        <div className="-m-8">
-            <CurrencyProvider>
-                <Suspense fallback={<FinanceSkeleton />}>
-                    <FinanceClient />
-                </Suspense>
-            </CurrencyProvider>
-        </div>
+        <CurrencyProvider>
+            <Suspense fallback={<FinanceSkeleton />}>
+                <FinanceClient />
+            </Suspense>
+        </CurrencyProvider>
     );
 }
