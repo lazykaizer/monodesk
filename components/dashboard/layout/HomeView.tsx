@@ -12,9 +12,9 @@ export const HomeView = () => {
     const { pages, setActivePageId, addPage, deletePage } = useRoadmapStore();
 
     return (
-        <div className="w-full max-w-6xl mx-auto py-12 px-6 sm:px-10 space-y-16">
+        <div className="w-full max-w-6xl mx-auto py-6 lg:py-12 px-4 lg:px-10 space-y-8 lg:space-y-16">
             {/* PREMIUM HEADER SECTION */}
-            <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#121212] to-black border border-white/5 p-8 sm:p-12">
+            <section className="relative overflow-hidden rounded-2xl lg:rounded-3xl bg-gradient-to-br from-[#121212] to-black border border-white/5 p-5 lg:p-12">
                 <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-500/5 to-transparent pointer-events-none" />
                 <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
 
@@ -24,7 +24,7 @@ export const HomeView = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="text-4xl sm:text-5xl font-black text-white tracking-tighter"
+                        className="text-3xl lg:text-5xl font-black text-white tracking-tighter"
                     >
                         Command your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Vision Engine</span>
                     </motion.h1>
@@ -33,7 +33,7 @@ export const HomeView = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="text-zinc-500 text-lg leading-relaxed font-medium"
+                        className="text-zinc-500 text-base lg:text-lg leading-relaxed font-medium"
                     >
                         Architect executable pathways, synchronize core milestones, and ship products with precision. Your strategic workspace is synchronized.
                     </motion.p>
@@ -56,7 +56,7 @@ export const HomeView = () => {
             </section>
 
             {/* STRATEGIC PIPELINE */}
-            <section className="space-y-8">
+            <section className="space-y-5 lg:space-y-8">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 text-zinc-100 font-black text-lg uppercase tracking-tighter">
                         <div className="p-2 rounded-lg bg-zinc-900 border border-white/5">
@@ -66,7 +66,7 @@ export const HomeView = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
                     {pages.map((page, index) => (
                         <motion.div
                             key={page.id}

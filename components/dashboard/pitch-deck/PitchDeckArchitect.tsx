@@ -92,7 +92,9 @@ export default function PitchDeckArchitect() {
     // Scaling Logic
     const containerRef = useRef<HTMLDivElement>(null);
     const slideEditorRef = useRef<HTMLDivElement>(null);
+    const mobileSlideAreaRef = useRef<HTMLDivElement>(null);
     const [scale, setScale] = useState(1);
+    const [mobileScale, setMobileScale] = useState(1);
 
     useEffect(() => {
         const updateScale = () => {
@@ -112,6 +114,19 @@ export default function PitchDeckArchitect() {
 
         return () => observer.disconnect();
     }, [activeSlide]);
+
+    useEffect(() => {
+        const updateMobileScale = () => {
+            if (mobileSlideAreaRef.current) {
+                const w = mobileSlideAreaRef.current.clientWidth;
+                if (w > 0) setMobileScale(w / 1920);
+            }
+        };
+        updateMobileScale();
+        const obs = new ResizeObserver(updateMobileScale);
+        if (mobileSlideAreaRef.current) obs.observe(mobileSlideAreaRef.current);
+        return () => obs.disconnect();
+    }, [viewMode, slides]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -798,6 +813,7 @@ export default function PitchDeckArchitect() {
     ]);
     const [customTopic, setCustomTopic] = useState("");
     const [isAnalyzingSlides, setIsAnalyzingSlides] = useState(false);
+    const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
 
     const handleAddCustomTopic = () => {
         if (!customTopic.trim()) return;
@@ -821,10 +837,11 @@ export default function PitchDeckArchitect() {
 
 
     return (
-        <div className="h-screen bg-[#050505] text-white font-sans flex overflow-hidden">
+        <>
+        <div className="h-screen max-lg:h-full bg-[#050505] text-white font-sans flex overflow-hidden">
 
             {/* LEFT SIDEBAR - DYNAMIC (HISTORY OR SLIDES) */}
-            <div className="w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col z-10 shrink-0 transition-all duration-300">
+            <div className="w-64 bg-[#0a0a0a] border-r border-white/5 flex flex-col z-10 shrink-0 transition-all duration-300 max-lg:hidden">
 
                 {viewMode === 'history' ? (
                     /* HISTORY MODE SIDEBAR */
@@ -938,18 +955,20 @@ export default function PitchDeckArchitect() {
             </div>
 
             {/* MAIN STAGE */}
-            <div className="flex-1 flex flex-col relative z-0 h-screen overflow-hidden bg-[#000]">
+            <div className="flex-1 flex flex-col relative z-0 h-screen max-lg:h-full overflow-hidden bg-[#000]">
                 {/* TOOLBAR */}
-                <div className="h-16 border-b border-white/5 bg-[#0a0a0a] flex items-center justify-between px-6 shrink-0 z-20">
+                <div className="h-16 border-b border-white/5 bg-[#0a0a0a] flex items-center justify-between px-6 max-lg:px-3 shrink-0 z-20">
                     <div className="flex-1 flex items-center">
                         {isComplete && viewMode === 'editor' && (
                             <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={handleBackToHistory}
-                                className="border-red-500/20 text-red-500 hover:bg-red-500/10"
+                                className="border-red-500/20 text-red-500 hover:bg-red-500/10 max-lg:h-8 max-lg:px-2.5 max-lg:text-[11px]"
                             >
-                                <Save size={16} className="mr-2" /> Save & Exit
+                                <Save size={16} className="mr-2 max-lg:w-3 max-lg:h-3 max-lg:mr-1" />
+                                <span className="max-lg:hidden">Save & Exit</span>
+                                <span className="lg:hidden">Exit</span>
                             </Button>
                         )}
                     </div>
@@ -1014,7 +1033,7 @@ export default function PitchDeckArchitect() {
                     <div className="flex items-center gap-3 flex-1 justify-end">
                         {/* Save Status Indicator */}
                         {(deckConfig.idea.trim() !== "" || slides.length > 0 || isComplete) && (
-                            <div className="flex items-center gap-2 mr-4 text-[10px] font-mono tracking-widest uppercase whitespace-nowrap">
+                            <div className="flex items-center gap-2 mr-4 text-[10px] font-mono tracking-widest uppercase whitespace-nowrap max-lg:hidden">
                                 {isSaving ? (
                                     <span className="flex items-center gap-2 text-cyan-500 animate-pulse font-bold">
                                         <Loader2 size={12} className="animate-spin" /> {savingProgress || "Saving..."}
@@ -1034,22 +1053,35 @@ export default function PitchDeckArchitect() {
                             </div>
                         )}
 
+                        {/* Desktop: full label — untouched */}
                         <ProjectSyncButton
                             module="pitch"
                             data={slides}
                             disabled={!isComplete}
                             context={{ name: startupName, description: deckConfig.idea }}
+                            className="max-lg:hidden"
                         />
+
+                        {/* Mobile only: Save as Project before Export in editor mode */}
+                        {isComplete && viewMode === 'editor' && (
+                            <ProjectSyncButton
+                                module="pitch"
+                                data={slides}
+                                disabled={!isComplete}
+                                context={{ name: startupName, description: deckConfig.idea }}
+                                className="lg:hidden"
+                            />
+                        )}
 
                         {isComplete && viewMode === 'editor' && (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
-                                        className="bg-white text-black hover:bg-zinc-200 h-10 px-6 font-bold gap-2"
+                                        className="bg-white text-black hover:bg-zinc-200 h-10 px-6 font-bold gap-2 max-lg:h-8 max-lg:px-3"
                                         disabled={isExporting}
                                     >
                                         {isExporting ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
-                                        {isExporting ? (exportProgress || "Exporting...") : "Export Options"}
+                                        <span className="max-lg:hidden">{isExporting ? (exportProgress || "Exporting...") : "Export Options"}</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56 bg-[#111] border-white/10 text-white p-2">
@@ -1114,7 +1146,26 @@ export default function PitchDeckArchitect() {
 
 
                 {/* CONTENT AREA: SETUP or EDITOR */}
-                <div className="flex-1 overflow-y-auto bg-[#050505] relative custom-scrollbar flex flex-col">
+                <div className="flex-1 overflow-y-auto bg-[#050505] relative custom-scrollbar flex flex-col max-lg:scrollbar-hide">
+                    {/* Mobile: My Decks (left) + Save as Project (right) row — below toolbar, wizard/input only */}
+                    {viewMode === 'history' && (
+                        <div className="lg:hidden flex items-center justify-between gap-2 px-4 pt-3 pb-1">
+                            <button
+                                onClick={() => setMobileHistoryOpen(true)}
+                                className="flex items-center gap-1 px-3 h-8 rounded-xl bg-white/5 border border-white/10 text-zinc-300 text-[11px] font-bold tracking-wide shrink-0 whitespace-nowrap"
+                            >
+                                My Decks <ChevronRight size={13} className="text-zinc-500" />
+                            </button>
+                            <div className="ml-auto">
+                                <ProjectSyncButton
+                                    module="pitch"
+                                    data={slides}
+                                    disabled={!isComplete}
+                                    context={{ name: startupName, description: deckConfig.idea }}
+                                />
+                            </div>
+                        </div>
+                    )}
                     <AnimatePresence mode="wait">
                         {viewMode === 'history' ? (
                             <motion.div
@@ -1122,10 +1173,10 @@ export default function PitchDeckArchitect() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: -20 }}
-                                className="flex-1 overflow-y-auto flex flex-col custom-scrollbar"
+                                className="flex-1 overflow-y-auto flex flex-col custom-scrollbar max-lg:scrollbar-hide"
                             >
-                                <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col pt-6 pb-32 px-4 min-h-full">
-                                    <div className="my-auto w-full">
+                                <div className="flex-1 w-full max-w-5xl mx-auto flex flex-col pt-6 pb-32 px-4 min-h-full overflow-x-hidden max-lg:min-h-0 max-lg:pb-0 max-lg:pt-0 max-lg:flex-1">
+                                    <div className="my-auto w-full max-lg:my-0 max-lg:flex max-lg:flex-col">
 
                                         {currentStep === 1 && (
                                             <motion.div
@@ -1133,24 +1184,24 @@ export default function PitchDeckArchitect() {
                                                 initial={{ opacity: 0, y: 20 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ duration: 0.4, ease: 'easeOut' }}
-                                                className="space-y-6 text-center"
+                                                className="space-y-6 text-center max-lg:flex max-lg:flex-col max-lg:justify-center max-lg:min-h-[calc(100dvh-260px)] max-lg:px-2 max-lg:space-y-4"
                                             >
                                                 {/* Ambient glow */}
-                                                <div className="absolute inset-0 pointer-events-none" aria-hidden>
+                                                <div className="absolute inset-0 pointer-events-none overflow-hidden" aria-hidden>
                                                     <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-cyan-500/5 rounded-full blur-3xl" />
                                                 </div>
 
                                                 <div className="relative space-y-5">
-                                                    <h1 className="text-5xl md:text-7xl font-serif font-black text-white tracking-tight leading-none">
+                                                    <h1 className="text-5xl md:text-7xl font-serif font-black text-white tracking-tight leading-none max-lg:text-4xl">
                                                         What are you<br />
                                                         <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400">building?</span>
                                                     </h1>
-                                                    <p className="text-zinc-400 text-base md:text-lg font-medium max-w-2xl mx-auto leading-relaxed whitespace-nowrap">
+                                                    <p className="text-zinc-400 text-base md:text-lg font-medium max-w-2xl mx-auto leading-relaxed whitespace-nowrap max-lg:whitespace-normal max-lg:text-sm max-lg:px-4">
                                                         Describe your startup idea. Our AI will craft a world-class investor pitch from scratch.
                                                     </p>
                                                 </div>
 
-                                                <div className="relative max-w-3xl mx-auto">
+                                                <div className="relative max-w-3xl mx-auto max-lg:max-w-none max-lg:w-full">
                                                     {currentProject && !deckConfig.idea && (
                                                         <button
                                                             onClick={() => setDeckConfig(prev => ({ ...prev, idea: currentProject.description || currentProject.name }))}
@@ -1164,7 +1215,7 @@ export default function PitchDeckArchitect() {
                                                         value={deckConfig.idea}
                                                         onChange={(e) => setDeckConfig(prev => ({ ...prev, idea: e.target.value }))}
                                                         placeholder="e.g. A decentralised AI network for autonomous drone logistics that reduces last-mile delivery costs by 60%..."
-                                                        className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl p-7 text-lg md:text-xl text-white placeholder:text-zinc-700 focus:outline-none focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/5 transition-all min-h-[220px] font-inter resize-none leading-relaxed"
+                                                        className="w-full bg-[#0a0a0a] border border-white/10 rounded-2xl p-7 text-lg md:text-xl text-white placeholder:text-zinc-700 focus:outline-none focus:border-cyan-500/50 focus:ring-4 focus:ring-cyan-500/5 transition-all min-h-[220px] max-lg:min-h-[120px] max-lg:p-4 max-lg:text-base font-inter resize-none leading-relaxed"
                                                         autoFocus
                                                     />
                                                     <div className="absolute bottom-4 right-5 flex items-center gap-3">
@@ -1174,12 +1225,12 @@ export default function PitchDeckArchitect() {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex justify-center pt-4">
+                                                <div className="flex justify-center pt-4 max-lg:fixed max-lg:bottom-[5.5rem] max-lg:left-0 max-lg:right-0 max-lg:px-6 max-lg:pt-0">
                                                     <Button
                                                         size="lg"
                                                         onClick={() => setCurrentStep(2)}
                                                         disabled={!deckConfig.idea.trim()}
-                                                        className="h-14 px-10 text-base font-bold bg-cyan-500 hover:bg-cyan-400 text-black group rounded-full shadow-[0_0_40px_rgba(6,182,212,0.4)] hover:shadow-[0_0_60px_rgba(6,182,212,0.6)] transition-all disabled:opacity-30 disabled:shadow-none"
+                                                        className="h-14 px-10 text-base font-bold bg-cyan-500 hover:bg-cyan-400 text-black group rounded-full shadow-[0_0_40px_rgba(6,182,212,0.4)] hover:shadow-[0_0_60px_rgba(6,182,212,0.6)] transition-all disabled:opacity-30 disabled:shadow-none max-lg:w-full max-lg:h-12 max-lg:rounded-2xl"
                                                     >
                                                         Next: Content & Voice
                                                         <ChevronRight className="ml-2 group-hover:translate-x-1 transition-transform" />
@@ -1217,7 +1268,7 @@ export default function PitchDeckArchitect() {
                                                             </span>
                                                             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                                                         </div>
-                                                        <div className="grid grid-cols-3 gap-3">
+                                                        <div className="grid grid-cols-3 gap-3 max-lg:grid-cols-1">
                                                             {[
                                                                 { id: 'minimal', label: 'Minimal', sub: 'Key bullet points', detail: 'Fast-paced, scannable', icon: AlignLeft },
                                                                 { id: 'balanced', label: 'Balanced', sub: 'Standard VC depth', detail: 'Recommended for Series A', icon: LayoutGrid },
@@ -1272,7 +1323,7 @@ export default function PitchDeckArchitect() {
                                                             </span>
                                                             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
                                                         </div>
-                                                        <div className="grid grid-cols-3 gap-3">
+                                                        <div className="grid grid-cols-3 gap-3 max-lg:grid-cols-1">
                                                             {[
                                                                 { id: 'professional', label: 'Professional', sub: 'VC ready & authoritative', detail: 'Best for investor meetings', icon: Rocket },
                                                                 { id: 'casual', label: 'Casual', sub: 'Friendly & direct', detail: 'Great for demos & pitches', icon: MousePointer2 },
@@ -1319,7 +1370,7 @@ export default function PitchDeckArchitect() {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex justify-center gap-3 pt-4 pb-24 relative">
+                                                <div className="flex justify-center gap-3 pt-4 pb-24 max-lg:pb-36 relative">
                                                     <Button variant="ghost" size="lg" className="h-12 px-7 rounded-full text-zinc-600 hover:text-white hover:bg-white/5 transition-all" onClick={() => setCurrentStep(1)}>
                                                         ← Back
                                                     </Button>
@@ -1446,7 +1497,7 @@ export default function PitchDeckArchitect() {
                                                     ))}
                                                 </div>
 
-                                                <div className="flex justify-center gap-3 pt-4 pb-24 relative">
+                                                <div className="flex justify-center gap-3 pt-4 pb-24 max-lg:pb-36 relative">
                                                     <Button variant="ghost" size="lg" className="h-12 px-7 rounded-full text-zinc-600 hover:text-white hover:bg-white/5 transition-all" onClick={() => setCurrentStep(2)}>
                                                         ← Back
                                                     </Button>
@@ -1683,7 +1734,7 @@ export default function PitchDeckArchitect() {
                                                     </motion.div>
                                                 </div>
 
-                                                <div className="flex justify-center gap-4 pt-10 pb-24">
+                                                <div className="flex justify-center gap-4 pt-10 pb-24 max-lg:pb-36">
                                                     <Button
                                                         variant="ghost"
                                                         size="lg"
@@ -1723,8 +1774,47 @@ export default function PitchDeckArchitect() {
                                 animate={{ opacity: 1 }}
                                 className="flex-1 relative flex flex-col overflow-hidden h-full"
                             >
-                                {/* Active Slide View */}
-                                <div ref={slideEditorRef} className="flex-1 bg-black p-4 md:p-12 flex flex-col items-center justify-center relative overflow-hidden">
+                                {/* MOBILE SLIDE THUMBNAIL STRIP — restored */}
+                                {slides.length > 0 && (
+                                    <div className="lg:hidden flex items-center gap-2 overflow-x-auto px-3 py-2 shrink-0 border-b border-white/5 bg-[#0a0a0a] scrollbar-hide">
+                                        {slides.map((slide, index) => (
+                                            <button
+                                                key={slide.id}
+                                                onClick={() => {
+                                                    setActiveSlide(slide);
+                                                    document.getElementById(`mobile-slide-${slide.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                }}
+                                                className={cn(
+                                                    "relative shrink-0 w-20 aspect-video rounded-lg border overflow-hidden transition-all",
+                                                    activeSlide?.id === slide.id
+                                                        ? "border-cyan-500 ring-2 ring-cyan-500/30 shadow-[0_0_10px_rgba(6,182,212,0.3)]"
+                                                        : "border-white/10 hover:border-white/30"
+                                                )}
+                                            >
+                                                {(slide.image_url || slide.moodImage) ? (
+                                                    <img src={slide.image_url || slide.moodImage} alt="thumb" className="w-full h-full object-cover opacity-60" />
+                                                ) : (
+                                                    <div className="w-full h-full bg-[#111] flex items-center justify-center">
+                                                        {generatingImages[slide.id] ? (
+                                                            <Loader2 className="animate-spin text-cyan-500" size={10} />
+                                                        ) : (
+                                                            <ImageIcon className="text-zinc-700" size={10} />
+                                                        )}
+                                                    </div>
+                                                )}
+                                                <div className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-black/60 flex items-center justify-center text-[8px] font-bold text-white">
+                                                    {index + 1}
+                                                </div>
+                                                {activeSlide?.id === slide.id && (
+                                                    <div className="absolute bottom-0 inset-x-0 h-0.5 bg-cyan-500" />
+                                                )}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* DESKTOP: single active slide view */}
+                                <div ref={slideEditorRef} className="flex-1 bg-black p-4 md:p-12 flex flex-col items-center justify-center relative overflow-hidden max-lg:hidden">
                                     {/* Floating Text Selection Toolbar */}
                                     <FloatingTextToolbar containerRef={slideEditorRef} />
 
@@ -1759,11 +1849,51 @@ export default function PitchDeckArchitect() {
                                                     isRefreshingImage={generatingImages[activeSlide.id]}
                                                 />
                                             </div>
-
-
                                         </div>
                                     )}
                                 </div>
+
+                                {/* MOBILE: all slides stacked vertically, scrollable */}
+                                <div ref={mobileSlideAreaRef} className="lg:hidden flex-1 overflow-y-auto scrollbar-hide bg-black px-3 py-4 flex flex-col gap-6 pb-32">
+                                    {isGenerating && slides.length === 0 && (
+                                        <div className="flex flex-col items-center justify-center h-full w-full py-20">
+                                            <CubeLoader
+                                                title={task?.loadingStep || "ARCHITECTING"}
+                                                description={`Generating your pitch deck slides, please wait...`}
+                                            />
+                                        </div>
+                                    )}
+                                    {slides.map((slide) => (
+                                        <div
+                                            key={slide.id}
+                                            id={`mobile-slide-${slide.id}`}
+                                            className="w-full shrink-0"
+                                        >
+                                            <div className="relative w-full overflow-hidden rounded-xl border border-white/10 shadow-xl"
+                                                style={{ height: `${1080 * mobileScale}px` }}
+                                            >
+                                                <div
+                                                    style={{
+                                                        transform: `scale(${mobileScale})`,
+                                                        transformOrigin: 'top left',
+                                                        width: '1920px',
+                                                        height: '1080px'
+                                                    }}
+                                                >
+                                                    <PitchDeckSlide
+                                                        slide={slide}
+                                                        isActive={activeSlide?.id === slide.id}
+                                                        isEditing={true}
+                                                        onUpdate={updateSlide}
+                                                        onRegenerateImage={() => generateImageForSlide(slide, true)}
+                                                        isRefreshingImage={generatingImages[slide.id]}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
                             </motion.div>
                         )}
                     </AnimatePresence>
@@ -1779,6 +1909,68 @@ export default function PitchDeckArchitect() {
                 </div>
             </div>
         </div>
+
+            {/* MOBILE HISTORY BOTTOM SHEET */}
+            {mobileHistoryOpen && (
+                <div className="lg:hidden fixed inset-0 z-[200] flex flex-col justify-end" onClick={() => setMobileHistoryOpen(false)}>
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+                    <div
+                        className="relative bg-[#0a0a0a] border-t border-white/10 rounded-t-3xl p-4 pb-[6rem] max-h-[80dvh] flex flex-col"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Handle */}
+                        <div className="w-10 h-1 rounded-full bg-white/20 mx-auto mb-4" />
+                        <div className="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 className="text-sm font-bold text-white tracking-wider">YOUR PROJECTS</h3>
+                                <p className="text-[10px] text-zinc-500">{history.length} saved decks</p>
+                            </div>
+                            <button onClick={() => setMobileHistoryOpen(false)} className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-zinc-400">
+                                <X size={16} />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto scrollbar-hide">
+                            {history.length === 0 ? (
+                                <div className="text-center py-10 text-zinc-600 text-xs">No saved decks found.</div>
+                            ) : (
+                                <div className="grid grid-cols-2 gap-3">
+                                    {history.map((item) => (
+                                        <div
+                                            key={item.id}
+                                            onClick={() => { loadFromHistory(item); setMobileHistoryOpen(false); }}
+                                            className="group relative w-full aspect-video rounded-xl border border-white/10 overflow-hidden cursor-pointer active:scale-95 transition-all"
+                                        >
+                                            {item.slides_content?.[0]?.image_url || item.slides_content?.[0]?.moodImage ? (
+                                                <img
+                                                    src={item.slides_content[0].image_url || item.slides_content[0].moodImage}
+                                                    alt="thumb"
+                                                    className="absolute inset-0 w-full h-full object-cover opacity-60"
+                                                />
+                                            ) : (
+                                                <div className="absolute inset-0 bg-zinc-900 flex items-center justify-center">
+                                                    <Layout className="text-zinc-700" size={20} />
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                                            <div className="absolute bottom-0 inset-x-0 p-2">
+                                                <p className="text-[11px] font-bold text-white leading-tight line-clamp-2">{item.deck_title}</p>
+                                                <p className="text-[9px] text-zinc-500 mt-0.5">{new Date(item.created_at).toLocaleDateString()}</p>
+                                            </div>
+                                            <button
+                                                onClick={(e) => { deleteFromHistory(e, item.id); }}
+                                                className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center text-red-400 opacity-0 group-active:opacity-100 max-lg:opacity-100"
+                                            >
+                                                <Trash2 size={11} />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
 

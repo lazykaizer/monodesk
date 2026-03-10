@@ -85,6 +85,12 @@ export default function SignupPage() {
     return (
         <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2 bg-[#050505] text-white font-sans selection:bg-orange-500/30 overflow-hidden relative">
 
+            {/* MOBILE BACKGROUND GLOW */}
+            <div className="lg:hidden absolute inset-0 pointer-events-none overflow-hidden z-0">
+                <div className="absolute -top-[10%] left-1/2 -translate-x-1/2 w-[500px] h-[400px] bg-[#FF5C00]/[0.07] rounded-full blur-[120px]" />
+                <div className="absolute bottom-0 right-0 w-[250px] h-[250px] bg-[#FF5C00]/[0.04] rounded-full blur-[90px]" />
+            </div>
+
             {/* BRANDING HEADER */}
             <div className="absolute top-8 left-8 z-50">
                 <Link href="/" className="flex items-center gap-3 group">
@@ -102,15 +108,16 @@ export default function SignupPage() {
             {/* LEFT PANEL: AUTH FORM */}
             <div className="flex flex-col items-center justify-start pt-24 lg:pt-32 p-8 lg:px-20 relative z-10">
 
-                <div className="w-full max-w-md p-8 lg:p-10 rounded-[32px] bg-white/[0.01] border border-white/[0.05] backdrop-blur-3xl shadow-2xl relative group overflow-hidden">
+                <div className="w-full max-w-md p-8 lg:p-10 rounded-[32px] bg-white/[0.01] max-lg:bg-white/[0.03] border border-white/[0.05] max-lg:border-orange-500/[0.15] backdrop-blur-3xl shadow-2xl max-lg:shadow-[0_0_80px_rgba(255,92,0,0.08)] relative group overflow-hidden">
                     {/* Background glow */}
                     <div className="absolute inset-0 bg-gradient-to-tr from-orange-500/[0.02] via-transparent to-blue-500/[0.02] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                    <div className="lg:hidden absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-orange-500/60 to-transparent" />
 
                     <div className="relative z-10 w-full">
                         {/* Header */}
                         <div className="mb-10 text-center lg:text-left">
                             <h1 className="text-4xl font-black mb-4 tracking-tight">Get started</h1>
-                            <p className="text-white/40 text-sm font-medium leading-relaxed">
+                            <p className="text-white/40 max-lg:text-white/60 text-sm font-medium leading-relaxed">
                                 The all-in-one workspace for turning ideas into products.
                             </p>
                         </div>
@@ -166,7 +173,7 @@ export default function SignupPage() {
                                     <button
                                         type="button"
                                         onClick={() => handleOAuth('google')}
-                                        className="flex items-center justify-center gap-3 bg-white/[0.03] border border-white/5 hover:border-orange-500/30 hover:bg-orange-500/[0.02] h-12 rounded-xl transition-all duration-500 group px-4"
+                                        className="flex items-center justify-center gap-3 bg-white/[0.03] max-lg:bg-white/[0.06] border border-white/5 max-lg:border-white/[0.12] hover:border-orange-500/30 hover:bg-orange-500/[0.02] h-12 rounded-xl transition-all duration-500 group px-4"
                                     >
                                         <svg className="w-5 h-5 group-hover:scale-110 transition-transform duration-500" viewBox="0 0 48 48">
                                             <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
@@ -174,30 +181,30 @@ export default function SignupPage() {
                                             <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
                                             <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
                                         </svg>
-                                        <span className="text-sm font-black tracking-widest uppercase text-white/50 group-hover:text-white transition-colors duration-500">Google</span>
+                                        <span className="text-sm font-black tracking-widest uppercase text-white/50 max-lg:text-white/70 group-hover:text-white transition-colors duration-500">Google</span>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => handleOAuth('github')}
-                                        className="flex items-center justify-center gap-3 bg-white/[0.03] border border-white/5 hover:border-orange-500/30 hover:bg-orange-500/[0.02] h-12 rounded-xl transition-all duration-500 group px-4"
+                                        className="flex items-center justify-center gap-3 bg-white/[0.03] max-lg:bg-white/[0.06] border border-white/5 max-lg:border-white/[0.12] hover:border-orange-500/30 hover:bg-orange-500/[0.02] h-12 rounded-xl transition-all duration-500 group px-4"
                                     >
                                         <svg className="w-5 h-5 fill-white group-hover:scale-110 transition-transform duration-500" viewBox="0 0 24 24">
                                             <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.372.79 1.103.79 2.222v3.293c0 .317.22.694.825.576C20.565 21.795 24 17.298 24 12c0-6.627-5.373-12-12-12z" />
                                         </svg>
-                                        <span className="text-sm font-black tracking-widest uppercase text-white/50 group-hover:text-white transition-colors duration-500">GitHub</span>
+                                        <span className="text-sm font-black tracking-widest uppercase text-white/50 max-lg:text-white/70 group-hover:text-white transition-colors duration-500">GitHub</span>
                                     </button>
                                 </div>
 
                                 <div className="flex items-center gap-4 py-0">
                                     <div className="h-[1px] flex-1 bg-white/[0.05]" />
-                                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/10 shrink-0">or continue with</span>
+                                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/10 max-lg:text-white/30 shrink-0">or continue with</span>
                                     <div className="h-[1px] flex-1 bg-white/[0.05]" />
                                 </div>
 
                                 <form onSubmit={handleSignUp} className="space-y-4">
                                     <div className="space-y-4">
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black tracking-[0.2em] text-white/20 uppercase ml-1">Full Name</label>
+                                            <label className="text-[10px] font-black tracking-[0.2em] text-white/20 max-lg:text-white/50 uppercase ml-1">Full Name</label>
                                             <div className="relative group/input">
                                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-orange-500 transition-all duration-500 group-focus-within/input:scale-110" size={18} />
                                                 <input
@@ -210,12 +217,12 @@ export default function SignupPage() {
                                                         setFullName(sanitized);
                                                     }}
                                                     required
-                                                    className="w-full bg-white/[0.01] border border-white/[0.05] group-hover/input:border-white/10 rounded-2xl py-4 pl-14 pr-4 text-white placeholder:text-white/10 focus:outline-none focus:border-orange-500/50 focus:bg-orange-500/[0.02] transition-all duration-500 ring-0 focus:ring-4 focus:ring-orange-500/10"
+                                                    className="w-full bg-white/[0.01] max-lg:bg-white/[0.04] border border-white/[0.05] max-lg:border-white/[0.15] group-hover/input:border-white/10 max-lg:group-hover/input:border-orange-500/30 rounded-2xl py-4 pl-14 pr-4 text-white placeholder:text-white/10 max-lg:placeholder:text-white/25 focus:outline-none focus:border-orange-500/50 focus:bg-orange-500/[0.02] transition-all duration-500 ring-0 focus:ring-4 focus:ring-orange-500/10"
                                                 />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black tracking-[0.2em] text-white/20 uppercase ml-1">Email</label>
+                                            <label className="text-[10px] font-black tracking-[0.2em] text-white/20 max-lg:text-white/50 uppercase ml-1">Email</label>
                                             <div className="relative group/input">
                                                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-orange-500 transition-all duration-500 group-focus-within/input:scale-110" size={18} />
                                                 <input
@@ -224,12 +231,12 @@ export default function SignupPage() {
                                                     value={email}
                                                     onChange={(e) => setEmail(e.target.value)}
                                                     required
-                                                    className="w-full bg-white/[0.01] border border-white/[0.05] group-hover/input:border-white/10 rounded-2xl py-4 pl-14 pr-4 text-white placeholder:text-white/10 focus:outline-none focus:border-orange-500/50 focus:bg-orange-500/[0.02] transition-all duration-500 ring-0 focus:ring-4 focus:ring-orange-500/10"
+                                                    className="w-full bg-white/[0.01] max-lg:bg-white/[0.04] border border-white/[0.05] max-lg:border-white/[0.15] group-hover/input:border-white/10 max-lg:group-hover/input:border-orange-500/30 rounded-2xl py-4 pl-14 pr-4 text-white placeholder:text-white/10 max-lg:placeholder:text-white/25 focus:outline-none focus:border-orange-500/50 focus:bg-orange-500/[0.02] transition-all duration-500 ring-0 focus:ring-4 focus:ring-orange-500/10"
                                                 />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-black tracking-[0.2em] text-white/20 uppercase ml-1">Password</label>
+                                            <label className="text-[10px] font-black tracking-[0.2em] text-white/20 max-lg:text-white/50 uppercase ml-1">Password</label>
                                             <div className="relative group/input">
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within/input:text-orange-500 transition-all duration-500 group-focus-within/input:scale-110" size={18} />
                                                 <input
@@ -239,7 +246,7 @@ export default function SignupPage() {
                                                     onChange={(e) => setPassword(e.target.value)}
                                                     required
                                                     minLength={10}
-                                                    className="w-full bg-white/[0.01] border border-white/[0.05] group-hover/input:border-white/10 rounded-2xl py-4 pl-14 pr-14 text-white placeholder:text-white/10 focus:outline-none focus:border-orange-500/50 focus:bg-orange-500/[0.02] transition-all duration-500 ring-0 focus:ring-4 focus:ring-orange-500/10"
+                                                    className="w-full bg-white/[0.01] max-lg:bg-white/[0.04] border border-white/[0.05] max-lg:border-white/[0.15] group-hover/input:border-white/10 max-lg:group-hover/input:border-orange-500/30 rounded-2xl py-4 pl-14 pr-14 text-white placeholder:text-white/10 max-lg:placeholder:text-white/25 focus:outline-none focus:border-orange-500/50 focus:bg-orange-500/[0.02] transition-all duration-500 ring-0 focus:ring-4 focus:ring-orange-500/10"
                                                 />
                                                 <button
                                                     type="button"
@@ -285,7 +292,7 @@ export default function SignupPage() {
                                     <div className="space-y-6 pt-2">
                                         <div className="flex items-start gap-3 px-1">
                                             <input type="checkbox" required className="mt-1 w-4 h-4 rounded-sm border-white/10 bg-white/5 checked:bg-[#FF5C00] transition-colors accent-[#FF5C00]" />
-                                            <p className="text-[11px] text-white/20 leading-relaxed font-bold">
+                                            <p className="text-[11px] text-white/20 max-lg:text-white/40 leading-relaxed font-bold">
                                                 I agree to the <Link href="/legal/terms" className="underline text-orange-500/50 hover:text-orange-500 transition-colors">Terms of Service</Link> and <Link href="/legal/privacy" className="underline text-orange-500/50 hover:text-orange-500 transition-colors">Privacy Policy</Link>
                                             </p>
                                         </div>
@@ -314,7 +321,7 @@ export default function SignupPage() {
                                         </button>
 
                                         <div className="text-center">
-                                            <p className="text-xs font-bold text-white/20">
+                                            <p className="text-xs font-bold text-white/20 max-lg:text-white/40">
                                                 Already have an account? <Link href="/login" className="text-orange-500 hover:text-orange-400 transition-colors ml-1">Sign in</Link>
                                             </p>
                                         </div>
@@ -325,12 +332,12 @@ export default function SignupPage() {
                     </div>
                 </div>
 
-            </div>
+            </div >
 
             {/* RIGHT PANEL: STRATEGY DECK SHOWCASE */}
-            <div className="hidden lg:flex flex-col justify-center items-center relative overflow-hidden bg-[#080808]">
+            < div className="hidden lg:flex flex-col justify-center items-center relative overflow-hidden bg-[#080808]" >
                 {/* Dynamic Liquid Atmos: Orbiting Blobs */}
-                <div className="absolute inset-0 overflow-hidden">
+                < div className="absolute inset-0 overflow-hidden" >
                     <motion.div
                         animate={{
                             scale: [1, 1.4, 1],
@@ -351,7 +358,7 @@ export default function SignupPage() {
                         transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
                         className="absolute -bottom-[20%] -right-[10%] w-[700px] h-[700px] bg-blue-500/[0.06] rounded-full blur-[120px]"
                     />
-                </div>
+                </div >
 
                 <div className="relative z-10 w-full flex flex-col items-center">
                     {/* STRATEGY CARD */}
@@ -511,8 +518,8 @@ export default function SignupPage() {
                         </p>
                     </div>
                 </div>
-            </div>
+            </div >
 
-        </div>
+        </div >
     );
 }

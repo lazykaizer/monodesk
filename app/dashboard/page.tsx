@@ -40,44 +40,87 @@ export default function DashboardPage() {
     };
 
     return (
-        <div className="flex flex-col items-center justify-start w-full min-h-screen -mt-8 pb-20 overflow-x-hidden relative">
-            <BackgroundPaths />
+        <>
+            {/* ===== DESKTOP VIEW — LOCKED IN A VAULT, DO NOT TOUCH ===== */}
+            <div className="hidden lg:block w-full h-full">
+                <div className="flex flex-col items-center justify-start w-full min-h-screen -mt-8 pb-20 overflow-x-hidden relative">
+                    <BackgroundPaths />
 
+                    {/* PERMANENT WELCOME ANIMATION - DO NOT REMOVE */}
+                    <div className="h-[120px] w-full flex items-center justify-center relative z-0">
+                        <GooeyText
+                            texts={["Welcome", "to", "Monodesk"]}
+                            morphTime={0.8}
+                            cooldownTime={0.6}
+                            className="font-bold text-white w-full max-w-lg select-none pointer-events-none"
+                        />
+                    </div>
 
+                    {/* Subtitle Message */}
+                    <div className="mt-2 text-center relative z-10 px-4 mb-4">
+                        <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 drop-shadow-sm font-sans uppercase">
+                            All systems operational.
+                        </h2>
+                        <p className="text-xl md:text-3xl font-bold text-accent-purple mt-2 tracking-wide font-mono animate-pulse">
+                            Ready to build.
+                        </p>
+                    </div>
 
-            {/* PERMANENT WELCOME ANIMATION - DO NOT REMOVE */}
-            <div className="h-[120px] w-full flex items-center justify-center relative z-0">
-                <GooeyText
-                    texts={["Welcome", "to", "Monodesk"]}
-                    morphTime={0.8}
-                    cooldownTime={0.6}
-                    className="font-bold text-white w-full max-w-lg select-none pointer-events-none"
-                />
+                    {/* Reveal Image List (Services) */}
+                    <div className="w-full max-w-4xl mx-auto mb-0 mt-16">
+                        <RevealImageList />
+                    </div>
+
+                    {/* Radial Orbital Timeline */}
+                    <div className="w-full max-w-5xl mx-auto mt-10">
+                        <RadialOrbitalTimeline
+                            timelineData={dashboardModulesData}
+                            onItemClick={handleServiceClick}
+                        />
+                    </div>
+                </div>
             </div>
 
-            {/* Subtitle Message */}
-            <div className="mt-2 text-center relative z-10 px-4 mb-4">
-                <h2 className="text-3xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-b from-white to-white/40 drop-shadow-sm font-sans uppercase">
-                    All systems operational.
-                </h2>
-                <p className="text-xl md:text-3xl font-bold text-accent-purple mt-2 tracking-wide font-mono animate-pulse">
-                    Ready to build.
-                </p>
-            </div>
+            {/* ===== MOBILE VIEW — BRAND NEW, TOUCH-FRIENDLY, ZERO DESKTOP BREAKAGE ===== */}
+            <div className="flex lg:hidden w-full flex-col overflow-x-hidden text-white pb-6 relative">
 
-            {/* Reveal Image List (Services) */}
-            <div className="w-full max-w-4xl mx-auto mb-0 mt-16">
-                <RevealImageList />
-            </div>
+                {/* Background animation — same as desktop, sits behind everything */}
+                <BackgroundPaths />
 
-            {/* Radial Orbital Timeline */}
-            <div className="w-full max-w-5xl mx-auto mt-10">
-                <RadialOrbitalTimeline
-                    timelineData={dashboardModulesData}
-                    onItemClick={handleServiceClick}
-                />
-            </div>
+                {/* 1. Welcome Animation */}
+                <div className="h-[90px] w-full flex items-center justify-center relative z-10">
+                    <GooeyText
+                        texts={["Welcome", "to", "Monodesk"]}
+                        morphTime={0.8}
+                        cooldownTime={0.6}
+                        className="font-bold text-white w-full max-w-xs select-none pointer-events-none"
+                    />
+                </div>
 
-        </div>
+                {/* 2. Subtitle */}
+                <div className="text-center px-4 mb-6 relative z-10">
+                    <h2 className="text-2xl font-extrabold tracking-tight text-white uppercase">
+                        All systems operational.
+                    </h2>
+                    <p className="text-sm font-mono text-purple-400 animate-pulse mt-1">
+                        Ready to build.
+                    </p>
+                </div>
+
+                {/* 3. Our Services — exact same RevealImageList, scaled for mobile, single line */}
+                <div className="w-full relative z-10">
+                    <RevealImageList textClassName="text-[3.25rem] font-black whitespace-nowrap" />
+                </div>
+
+                {/* 4. Radial Orbital Timeline */}
+                <div className="w-full mt-4 overflow-hidden relative z-10">
+                    <RadialOrbitalTimeline
+                        timelineData={dashboardModulesData}
+                        onItemClick={handleServiceClick}
+                        radius={130}
+                    />
+                </div>
+            </div>
+        </>
     );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Send, Download, RefreshCw, Wand2, Image as ImageIcon, Sparkles, Video, Palette, Camera, ChevronRight, ChevronLeft, X, Upload, ImagePlus, Trash2, Plus, ChevronDown, Rocket } from "lucide-react";
+import { Send, Download, RefreshCw, Wand2, Image as ImageIcon, Sparkles, Video, Palette, Camera, ChevronRight, ChevronLeft, X, Upload, ImagePlus, Trash2, Plus, ChevronDown, Rocket, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/core/button";
 import { Input } from "@/components/ui/core/input";
 import { Badge } from "@/components/ui/core/badge";
@@ -71,6 +71,21 @@ export default function CreativeClient() {
     const [isDraggingOverProduct, setIsDraggingOverProduct] = useState(false);
     const [isDraggingOverReference, setIsDraggingOverReference] = useState(false);
     const [isDraggingOverPrompt, setIsDraggingOverPrompt] = useState(false);
+    const [modeDropdownOpen, setModeDropdownOpen] = useState(false);
+    const [topModeDropdownOpen, setTopModeDropdownOpen] = useState(false);
+    const [mobileHistoryOpen, setMobileHistoryOpen] = useState(false);
+    const [swipeDir, setSwipeDir] = useState<'left' | 'right' | null>(null);
+    const [touchStartX, setTouchStartX] = useState<number | null>(null);
+    const [promptExpanded, setPromptExpanded] = useState(false);
+
+    const handleSwipeNavigate = (direction: 'next' | 'prev') => {
+        setSwipeDir(direction === 'next' ? 'left' : 'right');
+        setPromptExpanded(false);
+        setTimeout(() => {
+            navigateHistory(direction);
+            setSwipeDir(null);
+        }, 220);
+    };
 
     useEffect(() => {
         const fetchHistoryItems = async () => {
@@ -428,18 +443,18 @@ Apply professional studio lighting and create a clean, high-end commercial photo
     };
 
     const modeConfig = {
-        image: { icon: ImageIcon, label: "Text to Image", color: "cyan", placeholder: "Describe your image..." },
-        video: { icon: Video, label: "Text to Video", color: "blue", placeholder: "Describe your video..." },
-        logo: { icon: Palette, label: "Logo Maker", color: "cyan", placeholder: "Describe your brand..." },
-        agency: { icon: Camera, label: "Agency Replacer", color: "cyan", placeholder: "Describe placement..." }
+        image: { icon: ImageIcon, label: "Text to Image", short: "Image", color: "cyan", placeholder: "Describe your image..." },
+        video: { icon: Video, label: "Text to Video", short: "Video", color: "blue", placeholder: "Describe your video..." },
+        logo: { icon: Palette, label: "Logo Maker", short: "Logo", color: "cyan", placeholder: "Describe your brand..." },
+        agency: { icon: Camera, label: "Agency Replacer", short: "Agency", color: "cyan", placeholder: "Describe placement..." }
     };
 
     const currentConfig = modeConfig[mode];
     const ModeIcon = currentConfig.icon;
 
     return (
-        <div className="w-full h-[calc(100vh-64px)] bg-[#020202] text-white flex flex-col font-sans border-t border-white/5 overflow-hidden">
-            <header className="h-16 border-b border-white/5 bg-[#050505] flex items-center justify-between px-6 z-20">
+        <div className="w-full h-[calc(100vh-64px)] max-lg:h-full bg-[#020202] text-white flex flex-col font-sans border-t border-white/5 overflow-hidden">
+            <header className="h-16 border-b border-white/5 bg-[#050505] flex items-center justify-between px-6 z-20 max-lg:px-3">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
@@ -447,7 +462,7 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                         </div>
                         <div>
                             <h1 className="text-lg font-bold tracking-tight text-zinc-100">Creative Studio</h1>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 max-lg:hidden">
                                 <p className="text-xs text-zinc-500 font-mono">REAL-TIME GENERATION</p>
                                 <span className="text-zinc-700">•</span>
                                 <span className="text-xs font-bold uppercase text-cyan-400">{currentConfig.label}</span>
@@ -466,15 +481,22 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                             description: prompt || task?.input || ""
                         }}
                     />
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 max-lg:hidden">
                         <span className={cn("w-2 h-2 rounded-full", isGenerating ? "bg-yellow-500 animate-pulse" : "bg-green-500")} />
                         <span className="text-xs text-zinc-500 uppercase tracking-widest">{isGenerating ? "PROCESSING" : "READY"}</span>
                     </div>
+                    {/* Mobile: history button */}
+                    <button
+                        onClick={() => setMobileHistoryOpen(true)}
+                        className="lg:hidden flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/5 border border-white/10 text-zinc-400 text-xs font-bold active:scale-95 transition-all"
+                    >
+                        <ImageIcon size={13} className="text-cyan-400" /> History
+                    </button>
                 </div>
             </header>
 
             <div className="flex-1 flex overflow-hidden">
-                <div className="w-60 bg-[#050505] border-r border-white/5 p-4 space-y-2">
+                <div className="w-60 bg-[#050505] border-r border-white/5 p-4 space-y-2 max-lg:hidden">
                     <h2 className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-4 px-2">Generation Modes</h2>
                     {(Object.keys(modeConfig) as Mode[]).map((modeKey) => {
                         const config = modeConfig[modeKey];
@@ -498,9 +520,55 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                 </div>
 
                 <div className="flex-1 bg-[#030303] flex flex-col h-full w-full relative">
+                    {/* ── MOBILE MODE SELECTOR (top right) ── */}
+                    <div className="lg:hidden absolute top-3 left-3 z-30">
+                        {topModeDropdownOpen && (
+                            <div className="fixed inset-0 z-40" onClick={() => setTopModeDropdownOpen(false)} />
+                        )}
+                        <button
+                            onClick={() => setTopModeDropdownOpen(o => !o)}
+                            className="relative z-50 flex items-center gap-2 px-3 py-2 rounded-xl bg-[#111] border border-white/10 shadow-lg active:scale-95 transition-all"
+                        >
+                            <div className="w-6 h-6 rounded-md bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20 shrink-0">
+                                <ModeIcon size={13} className="text-cyan-400" />
+                            </div>
+                            <span className="text-xs font-bold text-zinc-200">{currentConfig.label}</span>
+                            <ChevronDown size={13} className={cn("text-zinc-500 transition-transform duration-200", topModeDropdownOpen && "rotate-180 text-cyan-400")} />
+                        </button>
+                        {topModeDropdownOpen && (
+                            <div className="absolute top-full mt-2 left-0 z-50 bg-[#0d0d0d] border border-white/10 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.6)] overflow-hidden w-48">
+                                <div className="px-3 pt-3 pb-2">
+                                    <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-600">Generation Mode</p>
+                                </div>
+                                {(Object.keys(modeConfig) as Mode[]).map((modeKey) => {
+                                    const cfg = modeConfig[modeKey];
+                                    const Ico = cfg.icon;
+                                    const isActive = mode === modeKey;
+                                    return (
+                                        <button
+                                            key={modeKey}
+                                            onClick={() => { setMode(modeKey); setTopModeDropdownOpen(false); }}
+                                            className={cn(
+                                                "w-full flex items-center gap-3 px-3 py-2.5 text-[12px] font-bold transition-all",
+                                                isActive ? "text-cyan-300 bg-cyan-500/10" : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"
+                                            )}
+                                        >
+                                            <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center border transition-all", isActive ? "bg-cyan-500/20 border-cyan-500/40" : "bg-white/5 border-white/5")}>
+                                                <Ico size={13} className={isActive ? "text-cyan-400" : "text-zinc-500"} />
+                                            </div>
+                                            <span className="flex-1 text-left">{cfg.label}</span>
+                                            {isActive && <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 shadow-[0_0_6px_rgba(34,211,238,0.8)]" />}
+                                        </button>
+                                    );
+                                })}
+                                <div className="h-2" />
+                            </div>
+                        )}
+                    </div>
+
                     {mode === "agency" && (
                         <div className="border-b border-white/5 bg-[#050505] p-4 shrink-0">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4 max-lg:grid-cols-1">
                                 <label className="flex flex-col gap-2">
                                     <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Product Image <span className="text-red-500">*</span></span>
                                     <div
@@ -574,7 +642,7 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                     )}
 
                     {/* 1. MAIN PREVIEW AREA (Takes remaining space) */}
-                    <div className="flex-1 w-full min-h-0 overflow-y-auto flex items-center justify-center p-6 relative creative-canvas-area custom-scrollbar">
+                    <div className="flex-1 w-full min-h-0 overflow-y-auto flex items-center justify-center p-6 max-lg:p-3 max-lg:pb-36 relative creative-canvas-area custom-scrollbar">
                         {!generatedImage && !generatedVideo && !isGenerating && (
                             <div className="text-center space-y-4 opacity-30">
                                 <ModeIcon size={64} className="mx-auto text-zinc-600" />
@@ -592,8 +660,8 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                         )}
 
                         {generatedImage && (
-                            <div className="relative w-full h-full max-w-4xl max-h-[80vh] group">
-                                <img src={generatedImage} alt="Generated" className="w-full h-full object-contain rounded-lg shadow-2xl border border-white/5" />
+                            <div className="relative w-full h-full max-w-4xl max-h-[80vh] max-lg:h-auto max-lg:max-h-none group">
+                                <img src={generatedImage} alt="Generated" className="w-full h-full max-lg:h-auto max-lg:max-h-[55vh] object-contain rounded-lg shadow-2xl border border-white/5" />
                                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                                     <Button size="icon" variant="secondary" onClick={handleDownload}><Download size={18} /></Button>
                                     <Button size="icon" variant="secondary" className="bg-red-500/80 hover:bg-red-600" onClick={() => setModeContent((prev: any) => ({ ...prev, [mode]: { image: null, concept: null } }))}><X size={18} /></Button>
@@ -602,8 +670,8 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                         )}
 
                         {generatedVideo && !generatedImage && (
-                            <div className="relative w-full h-full max-w-4xl max-h-[80vh] group bg-black rounded-lg overflow-hidden border border-white/10 shadow-2xl">
-                                <video src={generatedVideo} controls autoPlay loop className="w-full h-full object-contain" />
+                            <div className="relative w-full h-full max-w-4xl max-h-[80vh] max-lg:h-auto max-lg:max-h-none group bg-black rounded-lg overflow-hidden border border-white/10 shadow-2xl">
+                                <video src={generatedVideo} controls autoPlay loop className="w-full h-full max-lg:h-auto max-lg:max-h-[55vh] object-contain" />
                                 <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
                                     <Button size="icon" variant="secondary" onClick={handleDownload}><Download size={18} /></Button>
                                     <Button size="icon" variant="secondary" className="bg-red-500/80 hover:bg-red-600" onClick={() => setModeContent((prev: any) => ({ ...prev, video: { video: null } }))}><X size={18} /></Button>
@@ -613,7 +681,7 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                     </div>
 
                     {/* 2. INPUT BAR CONTAINER (Anchored at Bottom) */}
-                    <div className="w-full max-w-4xl mx-auto px-6 pb-6 mt-auto z-10">
+                    <div className="w-full max-w-4xl mx-auto px-6 pb-6 mt-auto z-10 max-lg:fixed max-lg:bottom-16 max-lg:left-0 max-lg:right-0 max-lg:px-3 max-lg:pb-3 max-lg:pt-2 max-lg:bg-[#020202]/95 max-lg:backdrop-blur-md max-lg:border-t max-lg:border-white/5 max-lg:mt-0">
                         <div className={cn("relative group transition-transform duration-300", isDraggingOverPrompt && "scale-[1.02]")} onDragOver={(e) => { e.preventDefault(); setIsDraggingOverPrompt(true); }} onDrop={(e) => handleDrop(e, 'input')}>
                             {attachedMedia && (
                                 <div className="absolute -top-12 left-0 flex items-center gap-2 bg-[#1a1a1a] border border-cyan-500/30 rounded-full px-3 py-1.5 shadow-xl animate-in fade-in slide-in-from-bottom-2">
@@ -631,7 +699,8 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                                     Synchronize with {currentProject.name} concept
                                 </button>
                             )}
-                            <div className={cn("bg-[#111] border border-white/10 rounded-2xl p-2 flex items-center gap-4 shadow-2xl transition-all", isDraggingOverPrompt ? "border-cyan-500 ring-4 ring-cyan-500/10" : "focus-within:border-white/20")}>
+                            {/* ── DESKTOP INPUT BAR (original, untouched) ── */}
+                            <div className={cn("max-lg:hidden bg-[#111] border border-white/10 rounded-2xl p-2 flex items-center gap-4 shadow-2xl transition-all", isDraggingOverPrompt ? "border-cyan-500 ring-4 ring-cyan-500/10" : "focus-within:border-white/20")}>
                                 <div className="flex-1 relative">
                                     <Input
                                         value={prompt}
@@ -643,20 +712,12 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                                     />
                                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
                                         {prompt && (
-                                            <Button
-                                                size="icon"
-                                                variant="ghost"
-                                                className="h-8 w-8 text-zinc-500 hover:text-red-400"
-                                                onClick={handleReset}
-                                                disabled={isGenerating}
-                                            >
-                                                <X size={16} />
-                                            </Button>
+                                            <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-500 hover:text-red-400" onClick={handleReset} disabled={isGenerating}><X size={16} /></Button>
                                         )}
                                         {mode !== 'agency' && (
                                             <>
-                                                <input type="file" id="manual-upload-input" accept="image/*" onChange={(e) => handleFileUpload(e, 'input')} className="hidden" />
-                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-500 hover:text-cyan-400" onClick={() => document.getElementById('manual-upload-input')?.click()} disabled={isGenerating}><Plus size={20} /></Button>
+                                                <input type="file" id="manual-upload-input-desktop" accept="image/*" onChange={(e) => handleFileUpload(e, 'input')} className="hidden" />
+                                                <Button size="icon" variant="ghost" className="h-8 w-8 text-zinc-500 hover:text-cyan-400" onClick={() => document.getElementById('manual-upload-input-desktop')?.click()} disabled={isGenerating}><Plus size={20} /></Button>
                                             </>
                                         )}
                                     </div>
@@ -665,11 +726,34 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                                     {isGenerating ? <X size={20} /> : <Send size={20} />}
                                 </Button>
                             </div>
+
+                            {/* ── MOBILE INPUT BAR (mode dropdown + layout) ── */}
+                            <div className={cn("lg:hidden bg-[#111] border border-white/10 rounded-2xl p-2 flex items-center gap-2 shadow-2xl transition-all", isDraggingOverPrompt ? "border-cyan-500 ring-4 ring-cyan-500/10" : "focus-within:border-white/20")}>
+                                <div className="flex-1 relative">
+                                    <Input
+                                        value={prompt}
+                                        onChange={(e) => setPrompt(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+                                        placeholder={attachedMedia ? "Describe changes..." : currentConfig.placeholder}
+                                        className="w-full h-12 bg-transparent border-none text-white pl-2 pr-2 text-base focus-visible:ring-0"
+                                        disabled={isGenerating}
+                                    />
+                                </div>
+                                {mode !== 'agency' && (
+                                    <>
+                                        <input type="file" id="manual-upload-input" accept="image/*" onChange={(e) => handleFileUpload(e, 'input')} className="hidden" />
+                                        <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0 text-zinc-500 hover:text-cyan-400" onClick={() => document.getElementById('manual-upload-input')?.click()} disabled={isGenerating}><Paperclip size={18} /></Button>
+                                    </>
+                                )}
+                                <Button onClick={handleGenerate} disabled={!isGenerating && !prompt.trim()} className={cn("h-12 w-12 rounded-xl transition-all duration-300 shrink-0", isGenerating ? "bg-red-500/20 hover:bg-red-500 text-red-500 border border-red-500/50" : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/20 shadow-lg")}>
+                                    {isGenerating ? <X size={20} /> : <Send size={20} />}
+                                </Button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div className={cn("bg-[#050505] border-l border-white/5 transition-all duration-300 overflow-hidden", isHistoryOpen ? "w-80" : "w-0")}>
+                <div className={cn("bg-[#050505] border-l border-white/5 transition-all duration-300 overflow-hidden max-lg:hidden", isHistoryOpen ? "w-80" : "w-0")}>
                     <div className="w-80 h-full flex flex-col">
                         <div className="p-4 border-b border-white/5 flex items-center justify-between">
                             <h2 className="text-sm font-bold text-zinc-300">Recent Creations</h2>
@@ -679,7 +763,7 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                             {history.length === 0 ? <p className="text-center py-8 text-zinc-600 text-sm">No creations yet</p> : history.map((item) => {
                                 const ItemIcon = modeConfig[item.asset_type].icon;
                                 return (
-                                    <button key={item.id} onClick={() => setSelectedHistoryItem(item)} className="w-full group rounded-lg border border-white/10 hover:border-cyan-500/50 overflow-hidden bg-[#0a0a0a] transition-all">
+                                    <button key={item.id} onClick={() => { setSelectedHistoryItem(item); setPromptExpanded(false); }} className="w-full group rounded-lg border border-white/10 hover:border-cyan-500/50 overflow-hidden bg-[#0a0a0a] transition-all">
                                         <div className="aspect-video w-full relative">
                                             {item.asset_type === "video" ? <video src={item.storage_path} className="w-full h-full object-cover" /> : <img src={item.storage_path} alt="History" className="w-full h-full object-cover" />}
                                             <Badge className="absolute top-2 right-2 bg-cyan-500/20 text-cyan-400 border-cyan-500/30"><ItemIcon size={12} className="mr-1" />{item.asset_type}</Badge>
@@ -696,17 +780,58 @@ Apply professional studio lighting and create a clean, high-end commercial photo
             {
                 selectedHistoryItem && (
                     <div className="fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4" onClick={() => setSelectedHistoryItem(null)}>
-                        <div className="bg-[#0a0a0a] border border-white/10 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto relative" onClick={(e) => e.stopPropagation()}>
+                        <div
+                            className="bg-[#0a0a0a] border border-white/10 rounded-2xl max-w-5xl w-full max-h-[90vh] overflow-y-auto relative"
+                            onClick={(e) => e.stopPropagation()}
+                            onTouchStart={(e) => setTouchStartX(e.touches[0].clientX)}
+                            onTouchEnd={(e) => {
+                                if (touchStartX === null) return;
+                                const diff = touchStartX - e.changedTouches[0].clientX;
+                                if (Math.abs(diff) > 50) handleSwipeNavigate(diff > 0 ? 'next' : 'prev');
+                                setTouchStartX(null);
+                            }}
+                        >
                             <Button size="icon" variant="ghost" onClick={() => setSelectedHistoryItem(null)} className="absolute top-4 right-4 text-white hover:bg-white/10 z-20"><X size={24} /></Button>
+                            {/* Prev / Next arrows */}
+                            {history.length > 1 && (
+                                <>
+                                    <button onClick={() => handleSwipeNavigate('prev')} className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"><ChevronLeft size={16} /></button>
+                                    <button onClick={() => handleSwipeNavigate('next')} className="absolute right-12 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-all"><ChevronRight size={16} /></button>
+                                </>
+                            )}
                             <div className="p-8 flex flex-col items-center gap-8">
-                                {selectedHistoryItem.asset_type === "video" ? (
-                                    <video src={selectedHistoryItem.storage_path} controls autoPlay loop className="max-w-full max-h-[60vh] rounded-lg shadow-2xl" />
-                                ) : (
-                                    <img src={selectedHistoryItem.storage_path} alt="History Large" className="max-w-full max-h-[60vh] rounded-lg shadow-2xl" />
-                                )}
+                                <div
+                                    className="w-full flex justify-center overflow-hidden"
+                                    style={{
+                                        transition: 'transform 0.22s cubic-bezier(0.4,0,0.2,1), opacity 0.22s ease',
+                                        transform: swipeDir === 'left' ? 'translateX(-60px)' : swipeDir === 'right' ? 'translateX(60px)' : 'translateX(0)',
+                                        opacity: swipeDir ? 0 : 1
+                                    }}
+                                >
+                                    {selectedHistoryItem.asset_type === "video" ? (
+                                        <video src={selectedHistoryItem.storage_path} controls autoPlay loop className="max-w-full max-h-[60vh] rounded-lg shadow-2xl" />
+                                    ) : (
+                                        <img src={selectedHistoryItem.storage_path} alt="History Large" className="max-w-full max-h-[60vh] rounded-lg shadow-2xl" />
+                                    )}
+                                </div>
                                 <div className="w-full bg-white/5 border border-white/10 rounded-xl p-6">
                                     <h4 className="text-xs font-bold text-cyan-400 uppercase mb-2">Prompt</h4>
-                                    <p className="text-lg text-zinc-300 italic">"{selectedHistoryItem.prompt_used}"</p>
+                                    {/* DESKTOP: full prompt always visible */}
+                                    <p className="max-lg:hidden text-lg text-zinc-300 italic">"{selectedHistoryItem.prompt_used}"</p>
+                                    {/* MOBILE: 2-line clamp, tap to expand */}
+                                    <div className="lg:hidden">
+                                        <p
+                                            className={cn("text-sm text-zinc-300 italic transition-all", !promptExpanded && "line-clamp-2")}
+                                        >
+                                            "{selectedHistoryItem.prompt_used}"
+                                        </p>
+                                        <button
+                                            onClick={() => setPromptExpanded(e => !e)}
+                                            className="mt-2 text-[11px] font-bold text-cyan-400 hover:text-cyan-300 uppercase tracking-widest"
+                                        >
+                                            {promptExpanded ? "Show less ↑" : "Read more..."}
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="flex gap-2 w-full">
                                     <Button onClick={reusePrompt} className="flex-1 bg-cyan-600 hover:bg-cyan-500 h-11 rounded-xl font-bold gap-2">
@@ -732,6 +857,34 @@ Apply professional studio lighting and create a clean, high-end commercial photo
                     </div>
                 )
             }
-        </div >
+
+            {/* Mobile History Bottom Sheet */}
+            {mobileHistoryOpen && (
+                <div className="lg:hidden fixed inset-0 z-[200] flex flex-col justify-end" onClick={() => setMobileHistoryOpen(false)}>
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+                    <div className="relative bg-[#0a0a0a] border-t border-white/10 rounded-t-3xl max-h-[75vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 shrink-0">
+                            <h2 className="text-sm font-bold text-zinc-200">Recent Creations</h2>
+                            <button onClick={() => setMobileHistoryOpen(false)} className="text-zinc-500 hover:text-white"><X size={18} /></button>
+                        </div>
+                        <div className="overflow-y-auto p-4 grid grid-cols-2 gap-3">
+                            {history.length === 0 ? (
+                                <p className="col-span-2 text-center py-8 text-zinc-600 text-sm">No creations yet</p>
+                            ) : history.map((item) => {
+                                const ItemIcon = modeConfig[item.asset_type].icon;
+                                return (
+                                    <button key={item.id} onClick={() => { setSelectedHistoryItem(item); setMobileHistoryOpen(false); setPromptExpanded(false); }} className="group rounded-xl border border-white/10 hover:border-cyan-500/50 overflow-hidden bg-[#111] transition-all">
+                                        <div className="aspect-video w-full relative">
+                                            {item.asset_type === "video" ? <video src={item.storage_path} className="w-full h-full object-cover" /> : <img src={item.storage_path} alt="History" className="w-full h-full object-cover" />}
+                                            <Badge className="absolute top-1.5 right-1.5 bg-cyan-500/20 text-cyan-400 border-cyan-500/30 text-[9px] px-1.5 py-0.5"><ItemIcon size={10} className="mr-1" />{item.asset_type}</Badge>
+                                        </div>
+                                        <div className="p-2 text-left"><p className="text-[10px] text-zinc-500 line-clamp-2">{item.prompt_used}</p></div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}        </div>
     );
 }

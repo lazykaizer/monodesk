@@ -16,9 +16,28 @@ interface CurrencyContextType {
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
-    const [currency, setCurrency] = useState<Currency>('USD');
+    const [currency, setCurrencyState] = useState<Currency>('USD');
     const [rates, setRates] = useState<Record<string, number>>({});
     const [isLoading, setIsLoading] = useState(true);
+
+    // On mount: load from localStorage, else fall back to INR on mobile / USD on desktop
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const saved = localStorage.getItem('monodesk_currency') as Currency | null;
+        if (saved && ['USD','EUR','GBP','INR','JPY'].includes(saved)) {
+            setCurrencyState(saved);
+        } else if (window.innerWidth < 1024) {
+            setCurrencyState('INR');
+        }
+    }, []);
+
+    // Wrap setter so every change is persisted to localStorage
+    const setCurrency = (c: Currency) => {
+        setCurrencyState(c);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem('monodesk_currency', c);
+        }
+    };
 
     useEffect(() => {
         const fetchRates = async () => {

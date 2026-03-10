@@ -27,7 +27,7 @@ export async function fetchCreativeHistory() {
 
     if (error) {
         console.error("Server Action: fetchCreativeHistory error:", error);
-        throw error;
+        throw new Error(error.message);
     }
 
     return data as CreativeHistoryItem[];
@@ -109,7 +109,7 @@ export async function saveCreativeAsset(assetUrl: string, assetType: string, pro
 
     if (error) {
         console.error("Server Action: saveCreativeAsset DB error:", error);
-        throw error;
+        throw new Error(error.message);
     }
 
     return data as CreativeHistoryItem;
@@ -144,6 +144,6 @@ export async function deleteCreativeAsset(id: string, storagePath?: string) {
         .eq('id', id)
         .eq('user_id', user.id);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return { success: true };
 }

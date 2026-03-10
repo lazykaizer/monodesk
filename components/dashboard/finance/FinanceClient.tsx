@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
 import { createClient } from "@/lib/supabase/client";
@@ -23,6 +24,7 @@ import {
     Search,
     ChevronLeft,
     ChevronRight,
+    ChevronDown,
     Paperclip,
     Sparkles,
     Banknote,
@@ -94,6 +96,279 @@ const getCategoryStyle = (category: string) => {
 const getCategoryIcon = (category: string) => getCategoryStyle(category).icon;
 
 // Memoized Sub-components
+
+// ─── Enhanced Cash Flow Chart (mobile + desktop) ────────────────────────────
+const MobileCashFlowChart = React.memo(({ transactions, view, currentDate }: { transactions: Transaction[], view: 'monthly' | 'yearly', currentDate: Date }) => {
+    const { format } = useCurrency();
+    const [tooltip, setTooltip] = useState<number | null>(null);
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const [containerWidth, setContainerWidth] = useState(0);
+    const [isDesktop, setIsDesktop] = useState(false);
+
+    useEffect(() => {
+        const checkDesktop = () => setIsDesktop(window.innerWidth >= 1024);
+        checkDesktop();
+        window.addEventListener('resize', checkDesktop);
+        return () => window.removeEventListener('resize', checkDesktop);
+    }, []);
+
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const ro = new ResizeObserver(entries => {
+            setContainerWidth(entries[0].contentRect.width);
+        });
+        ro.observe(el);
+        setContainerWidth(el.getBoundingClientRect().width);
+        return () => ro.disconnect();
+    }, []);
+
+    const chartData = useMemo(() => {
+        const now = currentDate;
+        let netDelta = 0;
+        const data: { label: string; income: number; expense: number; netDelta: number; hasActivity: boolean }[] = [];
+
+        if (view === 'monthly') {
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const txs = transactions.filter(t => t.transaction_date === dateStr);
+                const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+                const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+                netDelta += income - expense;
+                data.push({ label: String(day), income, expense, netDelta, hasActivity: income > 0 || expense > 0 });
+            }
+        } else {
+            const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            for (let i = 0; i < 12; i++) {
+                const txs = transactions.filter(t => {
+                    const d = new Date(t.transaction_date);
+                    return d.getMonth() === i && d.getFullYear() === now.getFullYear();
+                });
+                const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
+                const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+                netDelta += income - expense;
+                data.push({ label: months[i], income, expense, netDelta, hasActivity: income > 0 || expense > 0 });
+            }
+        }
+        return data;
+    }, [transactions, view, currentDate]);
+
+    const maxBar = Math.max(...chartData.map(d => Math.max(d.income, d.expense)), 1);
+    const allDeltas = chartData.map(d => d.netDelta);
+    const minDelta = Math.min(...allDeltas, 0);
+    const maxDelta = Math.max(...allDeltas, 0);
+    const unifiedMax = Math.max(maxBar, Math.abs(maxDelta), Math.abs(minDelta), 1);
+
+    // On desktop: fill full width with evenly spaced bars; on mobile: fixed bar width + horizontal scroll
+    const CHART_H = isDesktop ? 340 : 150;
+    const LABEL_H = isDesktop ? 28 : 20;
+    const BASE_Y  = CHART_H - 8;
+    const MAX_H   = CHART_H - 16;
+
+    const count = chartData.length;
+    let BAR_W: number, GAP: number, svgW: number;
+    if (isDesktop && containerWidth > 0) {
+        const totalGap = containerWidth * 0.04;
+        GAP = totalGap / Math.max(count - 1, 1);
+        BAR_W = (containerWidth - totalGap - 16) / count;
+        svgW = containerWidth - 8;
+    } else {
+        BAR_W = view === 'monthly' ? 11 : 24;
+        GAP   = view === 'monthly' ? 4  : 8;
+        svgW  = Math.max(count * (BAR_W + GAP) - GAP + 12, 300);
+    }
+
+    const deltaY = (v: number) => BASE_Y - (v / unifiedMax) * MAX_H;
+
+    const linePoints = chartData.map((d, i) => {
+        const x = i * (BAR_W + GAP) + BAR_W / 2;
+        return `${x},${deltaY(d.netDelta)}`;
+    }).join(' ');
+
+    const areaPath = chartData.length > 1
+        ? `M${BAR_W / 2},${BASE_Y} ` +
+          chartData.map((d, i) => {
+              const x = i * (BAR_W + GAP) + BAR_W / 2;
+              return `L${x},${deltaY(d.netDelta)}`;
+          }).join(' ') +
+          ` L${(count - 1) * (BAR_W + GAP) + BAR_W / 2},${BASE_Y} Z`
+        : '';
+
+    if (transactions.length === 0) {
+        return (
+            <div className="flex items-center justify-center h-[180px] text-zinc-700 text-[9px] font-black uppercase tracking-[0.3em]">No Data</div>
+        );
+    }
+
+    const active = tooltip !== null ? chartData[tooltip] : null;
+
+    return (
+        <div ref={containerRef} className="w-full select-none">
+            {/* Tooltip bar */}
+            <div className={cn(
+                "mx-3 mb-2 p-2.5 rounded-xl border transition-all duration-200",
+                active ? "bg-[#11121b] border-white/10 opacity-100" : "opacity-0 pointer-events-none border-transparent"
+            )} style={{ minHeight: 40 }}>
+                {active && (
+                    <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-black text-white uppercase tracking-wider">{active.label}</span>
+                        <div className="flex items-center gap-3">
+                            {active.income > 0 && <span className="text-[9px] text-emerald-400 font-mono font-bold">+{format(active.income)}</span>}
+                            {active.expense > 0 && <span className="text-[9px] text-red-400 font-mono font-bold">-{format(active.expense)}</span>}
+                            <span className="text-[9px] text-blue-400 font-mono font-bold">net {format(active.netDelta)}</span>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Scrollable SVG chart */}
+            <div
+                className={isDesktop ? "w-full px-2 overflow-x-hidden" : "overflow-x-auto px-3 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"}
+                style={isDesktop ? undefined : { WebkitOverflowScrolling: 'touch' }}
+            >
+                <svg width={svgW} height={CHART_H + LABEL_H} style={{ display: 'block' }}>
+                    <defs>
+                        <linearGradient id="mBalGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.18" />
+                            <stop offset="100%" stopColor="#3b82f6" stopOpacity="0" />
+                        </linearGradient>
+                        <linearGradient id="mIncGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#10b981" stopOpacity="0.95" />
+                            <stop offset="100%" stopColor="#10b981" stopOpacity="0.45" />
+                        </linearGradient>
+                        <linearGradient id="mExpGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="#ef4444" stopOpacity="0.95" />
+                            <stop offset="100%" stopColor="#ef4444" stopOpacity="0.45" />
+                        </linearGradient>
+                    </defs>
+
+                    {/* Grid lines */}
+                    {[0, 0.33, 0.66, 1].map((p, idx) => (
+                        <line
+                            key={idx}
+                            x1="0" y1={BASE_Y - p * MAX_H}
+                            x2={svgW} y2={BASE_Y - p * MAX_H}
+                            stroke="rgba(255,255,255,0.04)" strokeWidth="1"
+                        />
+                    ))}
+
+                    {/* Area fill under net-delta line */}
+                    {areaPath && <path d={areaPath} fill="url(#mBalGrad)" />}
+
+                    {/* Bars + hit areas */}
+                    {chartData.map((d, i) => {
+                        const x = i * (BAR_W + GAP);
+                        const halfW = BAR_W / 2 - 0.5;
+                        // bars use same unified scale as the line
+                        const incH = d.income > 0 ? Math.max((d.income / unifiedMax) * MAX_H, 3) : 0;
+                        const expH = d.expense > 0 ? Math.max((d.expense / unifiedMax) * MAX_H, 3) : 0;
+                        const isActive = tooltip === i;
+                        const bothBars = d.income > 0 && d.expense > 0;
+
+                        return (
+                            <g key={i} onClick={() => setTooltip(isActive ? null : i)} style={{ cursor: 'pointer' }}>
+                                {/* Tap hit area */}
+                                <rect x={x} y={0} width={BAR_W} height={CHART_H} fill="transparent" />
+                                {/* Active column highlight */}
+                                {isActive && (
+                                    <rect x={x} y={0} width={BAR_W} height={BASE_Y} rx="3" fill="rgba(255,255,255,0.03)" />
+                                )}
+                                {!d.hasActivity ? (
+                                    <circle cx={x + BAR_W / 2} cy={BASE_Y} r="1.5" fill="rgba(255,255,255,0.07)" />
+                                ) : (
+                                    <>
+                                        {/* Income bar — left half if both exist, full width if only income */}
+                                        {d.income > 0 && (
+                                            <rect
+                                                x={x} y={BASE_Y - incH}
+                                                width={bothBars ? halfW : BAR_W} height={incH}
+                                                fill="url(#mIncGrad)" rx="2" ry="2"
+                                                opacity={isActive ? 1 : 0.8}
+                                            />
+                                        )}
+                                        {/* Expense bar — right half if both exist, full width if only expense */}
+                                        {d.expense > 0 && (
+                                            <rect
+                                                x={bothBars ? x + halfW + 1 : x} y={BASE_Y - expH}
+                                                width={bothBars ? halfW : BAR_W} height={expH}
+                                                fill="url(#mExpGrad)" rx="2" ry="2"
+                                                opacity={isActive ? 1 : 0.8}
+                                            />
+                                        )}
+                                    </>
+                                )}
+                            </g>
+                        );
+                    })}
+
+                    {/* Net-delta polyline — now on same scale as bars, dots will sit between bar tops */}
+                    <polyline
+                        points={linePoints}
+                        fill="none"
+                        stroke="#3b82f6"
+                        strokeWidth={isDesktop ? 2 : 1.5}
+                        strokeLinejoin="round"
+                        strokeLinecap="round"
+                        opacity="0.75"
+                    />
+
+                    {/* Dots — only on active days, aligned to the line via same deltaY() as linePoints */}
+                    {chartData.map((d, i) => {
+                        if (!d.hasActivity) return null;
+                        const cx = i * (BAR_W + GAP) + BAR_W / 2;
+                        const cy = deltaY(d.netDelta);
+                        const isActive = tooltip === i;
+                        return (
+                            <circle
+                                key={i} cx={cx} cy={cy}
+                                r={isActive ? (isDesktop ? 6 : 4) : (isDesktop ? 4 : 2.5)}
+                                fill={isActive ? "#60a5fa" : "#2563eb"}
+                                stroke="#0b0c15" strokeWidth={isDesktop ? 2 : 1.5}
+                                opacity={0.9}
+                            />
+                        );
+                    })}
+
+                    {/* X-axis labels */}
+                    {chartData.map((d, i) => {
+                        const showLabel = view === 'yearly' || true;
+                        if (!showLabel) return null;
+                        const x = i * (BAR_W + GAP) + BAR_W / 2;
+                        return (
+                            <text
+                                key={i} x={x} y={CHART_H + LABEL_H - 4}
+                                textAnchor="middle" fontSize={isDesktop ? 11 : 8}
+                                fill={tooltip === i ? "#94a3b8" : "rgba(255,255,255,0.22)"}
+                                fontFamily="monospace" fontWeight="bold"
+                            >
+                                {d.label}
+                            </text>
+                        );
+                    })}
+                </svg>
+            </div>
+
+            {/* Legend */}
+            <div className="flex items-center gap-4 px-3 mt-2">
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-sm bg-emerald-500/80" />
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Income</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-sm bg-red-500/80" />
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Expense</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                    <div className="w-4 h-0.5 rounded bg-blue-500/80" />
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Balance</span>
+                </div>
+            </div>
+        </div>
+    );
+});
+// ────────────────────────────────────────────────────────────────────────────
+
 const CashFlowChart = React.memo(({ transactions, view, currentDate }: { transactions: Transaction[], view: 'monthly' | 'yearly', currentDate: Date }) => {
     const { convert, format, currency } = useCurrency();
     const chartData = useMemo(() => {
@@ -326,42 +601,42 @@ const CashFlowChart = React.memo(({ transactions, view, currentDate }: { transac
 
 const SimpleTransactionRow = React.memo(({ tx, onEdit, onDelete, format }: { tx: Transaction, onEdit: () => void, onDelete: () => void, format: (n: number) => string }) => (
     <div className="bg-[#11121b] border border-white/5 p-4 rounded-xl flex items-center justify-between group hover:border-white/10 transition-all">
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 max-lg:min-w-0">
             <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0", tx.type === 'income' ? "bg-emerald-500/10 text-emerald-500" : "bg-red-500/10 text-red-500")}>
                 {tx.type === 'income' ? <TrendingUp size={18} /> : <CreditCard size={18} />}
             </div>
-            <div>
-                <h4 className="font-bold text-sm text-white">{tx.description}</h4>
+            <div className="max-lg:min-w-0">
+                <h4 className="font-bold text-sm text-white max-lg:truncate">{tx.description}</h4>
                 <p className="text-xs text-zinc-500">{tx.category} • {tx.transaction_date}</p>
             </div>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 max-lg:shrink-0 max-lg:ml-2 max-lg:gap-3">
             <span className={cn("font-bold font-mono", tx.type === 'income' ? "text-emerald-400" : "text-red-400")}>{tx.type === 'income' ? "+" : ""}{format(tx.amount)}</span>
-            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-white" onClick={onEdit}><Edit2 size={14} /></Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500/50 hover:text-red-400" onClick={onDelete}><Trash2 size={14} /></Button>
+            <div className="flex gap-2 opacity-0 group-hover:opacity-100 max-lg:opacity-100 max-lg:gap-1 transition-opacity">
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-zinc-500 hover:text-white max-lg:h-7 max-lg:w-7" onClick={onEdit}><Edit2 size={14} /></Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500/50 hover:text-red-400 max-lg:h-7 max-lg:w-7" onClick={onDelete}><Trash2 size={14} /></Button>
             </div>
         </div>
     </div>
 ));
 
 const ReportRow = React.memo(({ report, onDownload, format }: { report: FinanceReport, onDownload: () => void, format: (n: number) => string }) => (
-    <div className="bg-[#11121b]/40 border border-white/5 p-4 rounded-2xl flex items-center justify-between group hover:border-blue-500/30 hover:bg-blue-500/[0.02] transition-all">
+    <div className="bg-[#11121b]/40 border border-white/5 p-4 rounded-2xl flex items-center justify-between group hover:border-blue-500/30 hover:bg-blue-500/[0.02] transition-all max-lg:flex-col max-lg:items-start max-lg:gap-3">
         <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-600/10 text-blue-400 flex items-center justify-center border border-blue-500/20">
+            <div className="w-12 h-12 rounded-xl bg-blue-600/10 text-blue-400 flex items-center justify-center border border-blue-500/20 shrink-0 max-lg:w-10 max-lg:h-10">
                 <FileText size={20} />
             </div>
-            <div>
+            <div className="max-lg:min-w-0">
                 <h4 className="font-bold text-[15px] text-white group-hover:text-blue-400 transition-colors uppercase tracking-tight truncate max-w-[300px]">{report.report_name}</h4>
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex items-center gap-2 mt-0.5 max-lg:flex-wrap">
                     <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">{new Date(report.generated_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</span>
                     <span className="text-[10px] text-zinc-600 font-bold">• {report.total_transactions} ITEMS</span>
                 </div>
             </div>
         </div>
 
-        <div className="flex items-center gap-10">
-            <div className="text-right">
+        <div className="flex items-center gap-10 max-lg:justify-between max-lg:w-full max-lg:gap-4">
+            <div className="text-right max-lg:text-left">
                 <p className="text-[9px] text-zinc-600 font-black uppercase tracking-widest mb-0.5 opacity-50">Net Flow</p>
                 <span className={cn("font-bold font-mono text-lg", report.net_value >= 0 ? "text-emerald-400" : "text-red-400")}>
                     {format(Number(report.net_value))}
@@ -382,10 +657,36 @@ const ReportRow = React.memo(({ report, onDownload, format }: { report: FinanceR
 const TransactionRow = React.memo(({ tx, onEdit, onDelete, onClick, format }: { tx: Transaction, onEdit: () => void, onDelete: () => void, onClick: () => void, format: (n: number) => string }) => {
     const style = getCategoryStyle(tx.category);
     return (
-        <div
-            onClick={onClick}
-            className="group relative bg-[#11121b]/40 border border-white/5 p-5 rounded-[2rem] flex items-center justify-between hover:border-blue-500/30 hover:bg-blue-500/[0.04] transition-all duration-500 cursor-pointer overflow-hidden hover:scale-[1.01] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] active:scale-[0.99]"
-        >
+        <>
+            {/* MOBILE CARD */}
+            <div
+                onClick={onClick}
+                className="lg:hidden flex flex-col bg-[#11121b]/60 border border-white/5 rounded-2xl p-4 gap-3 active:scale-[0.99] transition-all cursor-pointer"
+            >
+                <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
+                        <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border", style.bg, style.color, style.border)}>{style.icon}</div>
+                        <h4 className="font-black text-sm text-white uppercase tracking-tight truncate">{tx.description}</h4>
+                    </div>
+                    <span className={cn("font-black font-mono text-base shrink-0", tx.type === 'income' ? "text-emerald-400" : "text-red-400")}>{tx.type === 'income' ? "+" : ""}{format(tx.amount)}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <span className={cn("text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border", style.bg, style.color, style.border.split(' ')[0])}>{tx.category}</span>
+                        <span className="text-[10px] text-zinc-600 font-bold">{new Date(tx.transaction_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                    </div>
+                    <div className="flex gap-1">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-zinc-500 hover:text-white rounded-lg" onClick={(e) => { e.stopPropagation(); onEdit(); }}><Edit2 size={13} /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-red-500/50 hover:text-red-400 rounded-lg" onClick={(e) => { e.stopPropagation(); onDelete(); }}><Trash2 size={13} /></Button>
+                    </div>
+                </div>
+            </div>
+
+            {/* DESKTOP ROW — exact original, untouched */}
+            <div
+                onClick={onClick}
+                className="max-lg:hidden group relative bg-[#11121b]/40 border border-white/5 p-5 rounded-[2rem] flex items-center justify-between hover:border-blue-500/30 hover:bg-blue-500/[0.04] transition-all duration-500 cursor-pointer overflow-hidden hover:scale-[1.01] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.5)] active:scale-[0.99]"
+            >
             {/* Animated Flow Line on Hover */}
             <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-gradient-to-b from-transparent via-blue-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
@@ -446,6 +747,7 @@ const TransactionRow = React.memo(({ tx, onEdit, onDelete, onClick, format }: { 
                 </div>
             </div>
         </div>
+    </>
     );
 });
 
@@ -477,6 +779,7 @@ function FinanceContent() {
     const [reportsHistory, setReportsHistory] = useState<FinanceReport[]>([]);
     const [isGeneratingReport, setIsGeneratingReport] = useState(false);
     const [isAnalyzingReceipt, setIsAnalyzingReceipt] = useState(false);
+    const [mobileMetricsOpen, setMobileMetricsOpen] = useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -650,8 +953,8 @@ function FinanceContent() {
     if (!mounted) return null;
 
     return (
-        <div className="flex min-h-screen w-full bg-[#0b0c15] text-white font-sans pt-4">
-            <aside className="w-72 bg-[#08080c] border-r border-white/5 p-6 flex flex-col gap-8 sticky top-0 h-[calc(100vh-64px)] overflow-y-auto">
+        <div className="flex min-h-screen w-full bg-[#0b0c15] text-white font-sans pt-4 max-lg:pt-0 overflow-x-hidden">
+            <aside className="max-lg:hidden w-72 bg-[#08080c] border-r border-white/5 p-6 flex flex-col gap-8 sticky top-0 h-[calc(100vh-64px)] overflow-y-auto">
                 <nav className="space-y-1">
                     {['overview', 'transactions', 'reports'].map(tab => (
                         <div key={tab} onClick={() => setActiveTab(tab as any)} className={cn("px-3 py-2 rounded-lg cursor-pointer transition-all capitalize", activeTab === tab ? "bg-blue-600/10 text-blue-400 font-bold" : "text-zinc-500 hover:text-white")}>{tab}</div>
@@ -663,8 +966,57 @@ function FinanceContent() {
                     <Card className="bg-[#11121b] border-white/5 p-4"><p className="text-xs text-zinc-500">Runway</p><h2 className="text-xl font-bold">{metrics.runway} Mo</h2></Card>
                 </div>
             </aside>
-            <main className="flex-1 flex flex-col">
-                <header className="h-20 border-b border-white/5 px-8 flex items-center justify-between sticky top-0 bg-[#0b0c15]/50 backdrop-blur-md z-10">
+            <main className="flex-1 flex flex-col min-w-0">
+
+                {/* ──── MOBILE ONLY: Sticky Top Bar ──── */}
+                <div className="lg:hidden flex flex-col sticky top-0 z-20 bg-[#0b0c15]/95 backdrop-blur-md border-b border-white/5 w-full">
+                    <div className="flex items-center justify-end px-4 py-2.5 gap-2">
+                        <input type="file" ref={fileInputRef} className="hidden" accept=".jpg,.jpeg,.png,.webp,.pdf" onChange={handleFileUpload} />
+                        <Select value={currency} onValueChange={(v: any) => setCurrency(v)}>
+                            <SelectTrigger className="h-7 w-[90px] bg-zinc-800 border-white/5 text-[11px] font-bold text-zinc-300 rounded-xl px-2 gap-1">
+                                <Globe size={11} className="text-blue-400 shrink-0" />
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[#11121b] border-white/10">
+                                <SelectItem value="USD">USD ($)</SelectItem>
+                                <SelectItem value="EUR">EUR (€)</SelectItem>
+                                <SelectItem value="GBP">GBP (£)</SelectItem>
+                                <SelectItem value="INR">INR (₹)</SelectItem>
+                                <SelectItem value="JPY">JPY (¥)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={isAnalyzingReceipt}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-800 border border-white/5 text-zinc-300 text-xs font-bold active:scale-95 transition-all disabled:opacity-50"
+                        >
+                            {isAnalyzingReceipt ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-indigo-400" />}
+                            {isAnalyzingReceipt ? "Scanning..." : "Scan"}
+                        </button>
+                        <button
+                            onClick={() => { setEditingId(null); setIsModalOpen(true); }}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-bold active:scale-95 transition-all shadow-lg"
+                        >
+                            <Plus size={13} /> New
+                        </button>
+                    </div>
+                    <div className="flex items-center gap-1 px-4 pt-1 pb-2.5 overflow-x-auto scrollbar-hide">
+                        {(['overview', 'transactions', 'reports'] as const).map(tab => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={cn(
+                                    "flex-1 min-w-0 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-normal transition-all whitespace-nowrap text-center",
+                                    activeTab === tab ? "bg-blue-600/20 text-blue-400 border border-blue-500/30" : "text-zinc-500 hover:text-zinc-300"
+                                )}
+                            >{tab}</button>
+                        ))}
+                    </div>
+                </div>
+
+
+
+                <header className="max-lg:hidden h-20 border-b border-white/5 px-8 flex items-center justify-between sticky top-0 bg-[#0b0c15]/50 backdrop-blur-md z-10">
                     <div className="flex items-center gap-4">
                         <h2 className="text-xl font-bold capitalize">{activeTab}</h2>
                     </div>
@@ -703,11 +1055,11 @@ function FinanceContent() {
                                     <Plus size={16} className="mr-2" /> New Transaction
                                 </Button>
                             </DialogTrigger>
-                            <DialogContent className="bg-[#0f101a] border-white/10 text-white max-w-md p-0 overflow-hidden rounded-3xl">
-                                <div className="bg-gradient-to-br from-blue-600/20 to-transparent p-8 pb-4">
+                            <DialogContent className="bg-[#0f101a] border-white/10 text-white max-w-md p-0 overflow-hidden rounded-3xl max-lg:max-h-[88dvh] max-lg:overflow-y-auto max-lg:rounded-2xl">
+                                <div className="bg-gradient-to-br from-blue-600/20 to-transparent p-8 pb-4 max-lg:p-5 max-lg:pb-3">
                                     <DialogHeader>
-                                        <DialogTitle className="text-2xl font-black uppercase tracking-tight flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg">
+                                        <DialogTitle className="text-2xl font-black uppercase tracking-tight flex items-center gap-3 max-lg:text-lg">
+                                            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg max-lg:w-8 max-lg:h-8">
                                                 <Plus size={20} />
                                             </div>
                                             {editingId ? "Edit" : "New"} Entry
@@ -718,7 +1070,7 @@ function FinanceContent() {
                                     </DialogHeader>
                                 </div>
 
-                                <div className="p-8 pt-4 space-y-6">
+                                <div className="p-8 pt-4 space-y-6 max-lg:p-5 max-lg:pt-3 max-lg:space-y-4">
                                     <div className="grid grid-cols-2 gap-2 p-1 bg-black/40 border border-white/5 rounded-2xl">
                                         <button
                                             onClick={() => setFormData({ ...formData, type: 'income' })}
@@ -751,7 +1103,7 @@ function FinanceContent() {
                                                     placeholder="e.g. Server Hosting, Client Payment..."
                                                     value={formData.description}
                                                     onChange={e => setFormData({ ...formData, description: e.target.value })}
-                                                    className="h-12 pl-11 bg-black/40 border-white/5 focus:border-blue-500/50 focus:ring-blue-500/20 rounded-xl transition-all"
+                                                    className="h-12 pl-11 bg-black/40 border-white/5 focus:border-blue-500/50 focus:ring-blue-500/20 rounded-xl transition-all max-lg:h-10"
                                                 />
                                             </div>
                                         </div>
@@ -766,14 +1118,14 @@ function FinanceContent() {
                                                         placeholder="0.00"
                                                         value={formData.amount}
                                                         onChange={e => setFormData({ ...formData, amount: e.target.value })}
-                                                        className="h-12 pl-11 bg-black/40 border-white/5 focus:border-blue-500/50 focus:ring-blue-500/20 rounded-xl transition-all font-mono font-bold"
+                                                        className="h-12 pl-11 bg-black/40 border-white/5 focus:border-blue-500/50 focus:ring-blue-500/20 rounded-xl transition-all font-mono font-bold max-lg:h-10"
                                                     />
                                                 </div>
                                             </div>
                                             <div className="space-y-2">
                                                 <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">Category</Label>
                                                 <Select value={formData.category} onValueChange={v => setFormData({ ...formData, category: v })}>
-                                                    <SelectTrigger className="h-12 bg-black/40 border-white/5 focus:border-blue-500/50 focus:ring-blue-500/20 rounded-xl transition-all">
+                                                    <SelectTrigger className="h-12 bg-black/40 border-white/5 focus:border-blue-500/50 focus:ring-blue-500/20 rounded-xl transition-all max-lg:h-10">
                                                         <SelectValue placeholder="Select" />
                                                     </SelectTrigger>
                                                     <SelectContent className="bg-[#11121b] border-white/10 text-zinc-300">
@@ -793,18 +1145,18 @@ function FinanceContent() {
                                                     type="date"
                                                     value={formData.transaction_date}
                                                     onChange={e => setFormData({ ...formData, transaction_date: e.target.value })}
-                                                    className="h-12 pl-11 bg-black/40 border-white/5 focus:border-blue-500/50 focus:ring-blue-500/20 rounded-xl transition-all text-sm"
+                                                    className="h-12 pl-11 bg-black/40 border-white/5 focus:border-blue-500/50 focus:ring-blue-500/20 rounded-xl transition-all text-sm max-lg:h-10"
                                                 />
                                             </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="p-8 pt-0 bg-gradient-to-t from-black/40 to-transparent">
+                                <div className="p-8 pt-0 bg-gradient-to-t from-black/40 to-transparent max-lg:p-5 max-lg:pt-0">
                                     <DialogFooter>
                                         <Button
                                             onClick={handleSave}
-                                            className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(37,99,235,0.3)] rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                                            className="w-full h-14 bg-blue-600 hover:bg-blue-500 text-white font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(37,99,235,0.3)] rounded-2xl transition-all hover:scale-[1.02] active:scale-[0.98] max-lg:h-11"
                                         >
                                             {editingId ? "Update" : "Confirm"} Record
                                         </Button>
@@ -814,17 +1166,17 @@ function FinanceContent() {
                         </Dialog>
                     </div>
                 </header>
-                <div className="flex-1 p-8">
+                <div className="flex-1 p-8 max-lg:p-3 max-lg:pb-4 max-lg:overflow-x-hidden max-lg:w-full">
                     {activeTab === 'overview' && (
-                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                            <div className="bg-[#0e0f16] border border-white/5 rounded-2xl overflow-hidden p-6">
-                                <div className="flex justify-between items-center mb-6">
+                        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 max-lg:space-y-4">
+                            <div className="bg-[#0e0f16] border border-white/5 rounded-2xl overflow-hidden p-6 max-lg:p-3 max-lg:rounded-xl">
+                                <div className="flex justify-between items-center mb-6 max-lg:flex-col max-lg:items-start max-lg:gap-3 max-lg:mb-3">
                                     <div className="space-y-1">
                                         <h3 className="text-sm font-black uppercase tracking-[0.2em] text-white">Cash Flow Analysis</h3>
                                         <p className="text-[10px] text-zinc-500 font-medium">Real-time forensic tracking of your runway.</p>
                                     </div>
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex items-center bg-black/40 border border-white/5 rounded-xl p-1 gap-1">
+                                    <div className="flex items-center gap-4 max-lg:w-full max-lg:flex-col max-lg:items-stretch max-lg:gap-2">
+                                        <div className="flex items-center bg-black/40 border border-white/5 rounded-xl p-1 gap-1 max-lg:w-full max-lg:justify-between max-lg:min-w-0">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
@@ -839,7 +1191,7 @@ function FinanceContent() {
                                             >
                                                 <ChevronLeft size={14} />
                                             </Button>
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 min-w-[100px] text-center">
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400 min-w-0 flex-1 text-center truncate">
                                                 {chartView === 'monthly'
                                                     ? chartDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
                                                     : chartDate.getFullYear()}
@@ -859,11 +1211,11 @@ function FinanceContent() {
                                                 <ChevronRight size={14} />
                                             </Button>
                                         </div>
-                                        <div className="flex p-1 bg-black/40 border border-white/5 rounded-xl">
+                                        <div className="flex p-1 bg-black/40 border border-white/5 rounded-xl max-lg:w-full">
                                             <button
                                                 onClick={() => setChartView('monthly')}
                                                 className={cn(
-                                                    "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                                                    "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex-1",
                                                     chartView === 'monthly' ? "bg-blue-600 text-white shadow-lg" : "text-zinc-500 hover:text-white"
                                                 )}
                                             >
@@ -872,7 +1224,7 @@ function FinanceContent() {
                                             <button
                                                 onClick={() => setChartView('yearly')}
                                                 className={cn(
-                                                    "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                                                    "px-4 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all flex-1",
                                                     chartView === 'yearly' ? "bg-blue-600 text-white shadow-lg" : "text-zinc-500 hover:text-white"
                                                 )}
                                             >
@@ -881,15 +1233,48 @@ function FinanceContent() {
                                         </div>
                                     </div>
                                 </div>
-                                <div className="flex justify-between items-center text-zinc-400">
-                                    <span>Total Transaction Value</span>
-                                    <span className="text-white font-mono">{format(Number(formData.amount || 0))}</span>
+                                <div className="flex justify-between items-center text-zinc-400 max-lg:text-sm max-lg:gap-2 mb-2">
+                                    <span className="shrink-0">Total Transaction Value</span>
+                                    <span className="text-white font-mono shrink-0">{format(Number(formData.amount || 0))}</span>
                                 </div>
-                                <div className="h-[400px] w-full">
-                                    <CashFlowChart transactions={transactions} view={chartView} currentDate={chartDate} />
+                                {/* Chart — same enhanced component for all screen sizes */}
+                                <div className="w-full pt-1 pb-2">
+                                    <MobileCashFlowChart transactions={transactions} view={chartView} currentDate={chartDate} />
                                 </div>
                             </div>
-                            <div className="space-y-3">
+                            {/* MOBILE: Metrics cards instead of transaction list */}
+                            <div className="hidden max-lg:grid grid-cols-1 gap-3">
+                                <div className="bg-[#11121b] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Total Balance</p>
+                                        <h2 className="text-2xl font-black text-white">{format(metrics.totalBalance)}</h2>
+                                    </div>
+                                    <div className="w-10 h-10 rounded-xl bg-blue-600/10 border border-blue-500/20 flex items-center justify-center">
+                                        <Banknote size={18} className="text-blue-400" />
+                                    </div>
+                                </div>
+                                <div className="bg-[#11121b] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Monthly Burn</p>
+                                        <h2 className="text-2xl font-black text-red-400">{format(metrics.currentMonthBurn)}</h2>
+                                    </div>
+                                    <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
+                                        <Flame size={18} className="text-red-400" />
+                                    </div>
+                                </div>
+                                <div className="bg-[#11121b] border border-white/5 rounded-2xl p-4 flex items-center justify-between">
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500 mb-1">Runway</p>
+                                        <h2 className="text-2xl font-black text-white">{metrics.runway} Mo</h2>
+                                    </div>
+                                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                                        <TrendingUp size={18} className="text-emerald-400" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* DESKTOP: Recent transactions list — untouched */}
+                            <div className="space-y-3 max-lg:hidden">
                                 {transactions.slice(0, 5).map(tx => (
                                     <SimpleTransactionRow
                                         key={tx.id}
@@ -903,7 +1288,7 @@ function FinanceContent() {
                         </div>
                     )}
                     {activeTab === 'transactions' && (
-                        <div className="grid grid-cols-1 gap-4 animate-in fade-in duration-500">
+                        <div className="grid grid-cols-1 gap-4 animate-in fade-in duration-500 max-lg:gap-3">
                             {transactions.map(tx => (
                                 <TransactionRow
                                     key={tx.id}
@@ -918,7 +1303,7 @@ function FinanceContent() {
                     )}
                     {activeTab === 'reports' && mounted && (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between max-lg:flex-col max-lg:items-start max-lg:gap-3">
                                 <div>
                                     <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-2">Audit History</h3>
                                     <p className="text-sm text-zinc-500">View and download your persistent financial audits.</p>
@@ -926,7 +1311,7 @@ function FinanceContent() {
                                 <Button
                                     onClick={handleGenerateReport}
                                     disabled={isGeneratingReport}
-                                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 px-6 rounded-2xl shadow-[0_10px_20px_rgba(16,185,129,0.2)] transition-all"
+                                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-12 px-6 rounded-2xl shadow-[0_10px_20px_rgba(16,185,129,0.2)] transition-all max-lg:w-full max-lg:h-10"
                                 >
                                     {isGeneratingReport ? <Loader2 className="animate-spin mr-2" /> : <FileText className="mr-2" />}
                                     Generate New Audit

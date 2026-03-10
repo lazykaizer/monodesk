@@ -23,9 +23,10 @@ interface ProjectSyncButtonProps {
         description: string;
     };
     disabled?: boolean;
+    compact?: boolean;
 }
 
-export default function ProjectSyncButton({ module, data, className, context, disabled }: ProjectSyncButtonProps) {
+export default function ProjectSyncButton({ module, data, className, context, disabled, compact }: ProjectSyncButtonProps) {
     const { activeProjectId, currentProject, projects, fetchProjects, setActiveProject, syncModuleData, createProject } = useProjectStore();
     const [isSyncing, setIsSyncing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
@@ -93,7 +94,7 @@ export default function ProjectSyncButton({ module, data, className, context, di
             ) : (
                 <>
                     {activeProjectId ? <RefreshCw size={16} /> : <Rocket size={16} />}
-                    {activeProjectId ? "Sync" : "Save as Project"}
+                    {activeProjectId ? "Sync" : compact ? "Save" : "Save as Project"}
                 </>
             )}
             {isAlreadySynced && !isSuccess && !isSyncing && (

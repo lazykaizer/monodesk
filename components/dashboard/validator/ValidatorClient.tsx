@@ -274,6 +274,16 @@ export default function ValidatorClient() {
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [displayModules, setDisplayModules] = useState<string[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [showRefreshTip, setShowRefreshTip] = useState(false);
+
+    // Show refresh tip once per session (all devices)
+    useEffect(() => {
+        const key = 'validator_refresh_tip_shown';
+        if (!sessionStorage.getItem(key)) {
+            sessionStorage.setItem(key, '1');
+            setShowRefreshTip(true);
+        }
+    }, []);
 
     const supabase = useMemo(() => createClient(), []);
 
@@ -468,7 +478,7 @@ export default function ValidatorClient() {
     };
 
     return (
-        <div className="px-8 pb-8 pt-12 font-sans flex-1 flex flex-col bg-transparent relative text-left">
+        <div className="px-8 pb-0 lg:pb-8 pt-12 font-sans flex-1 flex flex-col justify-end lg:justify-normal bg-transparent relative text-left">
             <div className="absolute top-4 right-8 flex items-center gap-3 z-20">
                 <div className="flex items-center gap-4">
                     {(idea.trim() || status !== 'idle' || displayModules.length > 0) && (
@@ -476,7 +486,7 @@ export default function ValidatorClient() {
                             variant="ghost"
                             size="icon"
                             onClick={handleClear}
-                            className="bg-red-500/5 border border-red-500/20 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all h-10 w-10 rounded-lg"
+                            className="max-lg:hidden bg-red-500/5 border border-red-500/20 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all h-10 w-10 rounded-lg"
                             title="Clear Analysis"
                         >
                             <X size={18} />
@@ -485,11 +495,11 @@ export default function ValidatorClient() {
                     <ProjectSyncButton module="validator" data={task?.data} disabled={!task?.data} context={{ name: idea.substring(0, 50), description: idea }} />
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => setIsHistoryOpen(true)} className="text-zinc-500 hover:text-white">
-                    <HistoryIcon size={18} className="mr-2" /> History
+                    <HistoryIcon size={18} className="lg:mr-2" /><span className="hidden lg:inline"> History</span>
                 </Button>
             </div>
 
-            <div className="w-full max-w-3xl mx-auto space-y-4 mt-auto">
+            <div className="w-full max-w-3xl mx-auto space-y-4 mt-0 lg:mt-auto">
                 {error && (
                     <div className="w-full bg-red-500/10 border border-red-500/50 text-red-200 px-4 py-3 rounded-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
                         <AlertCircle size={20} className="text-red-500 shrink-0" />
@@ -500,7 +510,7 @@ export default function ValidatorClient() {
                     </div>
                 )}
 
-                <div className="text-center space-y-4 mb-10">
+                <div className="text-center space-y-4 mb-6 lg:mb-10">
                     <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60">Idea Validator</h1>
                     <p className="text-zinc-400 text-sm max-w-md mx-auto">Input your concept below for an instant AI-driven market analysis.</p>
                 </div>
@@ -522,8 +532,10 @@ export default function ValidatorClient() {
                                 Synchronize with {currentProject.name} concept
                             </button>
                         )}
-                        <textarea value={idea} onChange={e => setIdea(e.target.value)} placeholder="Describe your product idea..." className="w-full h-28 bg-transparent text-zinc-200 resize-none focus:outline-none leading-relaxed" />
-                        <div className="flex justify-between items-end pt-2">
+                        <textarea value={idea} onChange={e => setIdea(e.target.value)} placeholder="Describe your product idea..." spellCheck={false} autoCorrect="off" autoComplete="off" className="w-full h-28 bg-transparent text-zinc-200 resize-none focus:outline-none leading-relaxed placeholder:text-transparent lg:placeholder:text-zinc-500" />
+                        <div className="flex flex-col pt-2 gap-2">
+                            {/* Main controls row */}
+                            <div className="flex justify-between items-center">
                             <div className="relative">
                                 {/* Floating Module Selector */}
                                 <Button
@@ -597,6 +609,8 @@ export default function ValidatorClient() {
                                                         onChange={(e) => setCustomTopic(e.target.value)}
                                                         onKeyDown={(e) => e.key === 'Enter' && addCustomTopic()}
                                                         placeholder="Specify custom topic..."
+                                                        autoComplete="off"
+                                                        spellCheck={false}
                                                         className="flex-1 bg-zinc-950 border border-white/10 rounded-lg px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-blue-500/50 transition-all shadow-inner"
                                                     />
                                                     <Button
@@ -614,9 +628,38 @@ export default function ValidatorClient() {
                                 )}
                             </div>
 
-                            <div className="flex items-center gap-3">
-                                {/* Mode Selector */}
-                                <div className="relative">
+                            <div className="flex items-center gap-2">
+                                {/* Mode Selector - mobile inline dropdown */}
+                                <div className="relative lg:hidden">
+                                    <button
+                                        onClick={() => setIsModeSelectorOpen(!isModeSelectorOpen)}
+                                        className="h-10 px-3 rounded-full bg-zinc-800/80 border border-white/10 text-zinc-300 text-xs font-medium flex items-center gap-1.5 hover:bg-zinc-800 transition-all"
+                                    >
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                                        {analysisMode === 'dashboard' ? 'Dashboard View' : 'Deep Report'}
+                                        <ChevronDown size={13} className={cn("transition-transform", isModeSelectorOpen && "rotate-180")} />
+                                    </button>
+                                    {isModeSelectorOpen && (
+                                        <div className="absolute bottom-12 right-0 w-44 bg-zinc-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50 animate-in slide-in-from-bottom-2 duration-200">
+                                            <button
+                                                onClick={() => { setAnalysisMode('dashboard'); setIsModeSelectorOpen(false); }}
+                                                className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors text-left"
+                                            >
+                                                <span className="text-xs font-medium text-zinc-200">Dashboard View</span>
+                                                {analysisMode === 'dashboard' && <Check size={12} className="text-blue-500" />}
+                                            </button>
+                                            <button
+                                                onClick={() => { setAnalysisMode('deep'); setIsModeSelectorOpen(false); }}
+                                                className="w-full px-4 py-3 flex items-center justify-between hover:bg-white/5 transition-colors text-left border-t border-white/5"
+                                            >
+                                                <span className="text-xs font-medium text-zinc-200">Deep Report</span>
+                                                {analysisMode === 'deep' && <Check size={12} className="text-blue-500" />}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                {/* Mode Selector - desktop only */}
+                                <div className="relative hidden lg:block">
                                     <button
                                         onClick={() => setIsModeSelectorOpen(!isModeSelectorOpen)}
                                         className="h-10 px-4 rounded-full bg-zinc-800/80 border border-white/10 text-zinc-300 text-sm font-medium flex items-center gap-2 hover:bg-zinc-800 transition-all"
@@ -662,7 +705,7 @@ export default function ValidatorClient() {
                                     onClick={handleAnalyze}
                                     disabled={!isAnalysisInProgress && !isSelectionValid}
                                     className={cn(
-                                        "transition-all duration-300 min-w-[140px] h-10 rounded-full",
+                                        "transition-all duration-300 lg:min-w-35 h-10 rounded-full",
                                         isAnalysisInProgress
                                             ? "bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white border border-red-500/50"
                                             : !isSelectionValid
@@ -670,27 +713,33 @@ export default function ValidatorClient() {
                                                 : "bg-blue-600 hover:bg-blue-500 shadow-blue-900/40"
                                     )}
                                 >
+                                    {/* Mobile: icon only */}
+                                    <span className="flex lg:hidden items-center justify-center px-1">
+                                        {isAnalysisInProgress ? <X size={20} /> : <ChevronRight size={20} />}
+                                    </span>
+                                    {/* Desktop: full text */}
                                     {isAnalysisInProgress ? (
-                                        <span className="flex items-center gap-2">
+                                        <span className="hidden lg:flex items-center gap-2">
                                             <X size={16} /> Stop {analysisProgress}%
                                         </span>
                                     ) : idea.trim().length === 0 ? (
-                                        <span className="flex items-center gap-2 text-zinc-500">
+                                        <span className="hidden lg:flex items-center gap-2 text-zinc-500">
                                             <Info size={16} /> Describe Idea
                                         </span>
                                     ) : selectedModules.length < 3 ? (
-                                        <span className="flex items-center gap-2 text-zinc-500">
+                                        <span className="hidden lg:flex items-center gap-2 text-zinc-500">
                                             <Info size={16} /> Select 3-8 Topics
                                         </span>
                                     ) : (
-                                        <span className="flex items-center gap-2 text-white">
+                                        <span className="hidden lg:flex items-center gap-2 text-white">
                                             <Sparkles size={16} /> Run Analysis
                                         </span>
                                     )}
                                 </Button>
                             </div>
-                        </div>
-                    </div>
+                            </div>{/* end main controls row */}
+                        </div>{/* end flex-col */}
+                    </div>{/* end p-4 */}
                     {status === "loading" && <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-cyan-500 to-blue-500" style={{ width: `${analysisProgress}%` }} />}
                 </div>
 
@@ -698,14 +747,34 @@ export default function ValidatorClient() {
 
                 {(status === "success") && result && (
                     <div className="relative animate-in fade-in slide-in-from-bottom-10 duration-700 space-y-8 mt-12">
+                        {/* Desktop: X on right only */}
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={() => setTask('validator', { status: 'idle', data: null, input: "" })}
-                            className="absolute top-0 right-0 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 z-20 transition-all rounded-full h-8 w-8"
+                            className="max-lg:hidden absolute top-0 right-0 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 z-20 transition-all rounded-full h-8 w-8"
                         >
                             <X size={16} />
                         </Button>
+                        {/* Mobile: X on both left and right */}
+                        <div className="lg:hidden flex items-center justify-between mb-2">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleClear}
+                                className="text-zinc-500 hover:text-red-500 hover:bg-red-500/10 transition-all rounded-full h-8 w-8"
+                            >
+                                <X size={16} />
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={handleClear}
+                                className="text-zinc-500 hover:text-red-500 hover:bg-red-500/10 transition-all rounded-full h-8 w-8"
+                            >
+                                <X size={16} />
+                            </Button>
+                        </div>
 
                         {viewMode === 'overview' ? (
                             <div className="w-full">
@@ -844,6 +913,27 @@ export default function ValidatorClient() {
                         <div className="p-4 border-t border-white/5 bg-zinc-900/50 text-center">
                             <p className="text-[10px] text-zinc-600">Select an item to restore full analysis</p>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* One-time refresh tip */}
+            {showRefreshTip && (
+                <div className="fixed bottom-20 lg:bottom-8 left-4 right-4 lg:left-auto lg:right-8 lg:w-80 z-200 pointer-events-auto">
+                    <div className="bg-[#0f0f0f] border border-cyan-500/30 rounded-2xl p-4 shadow-[0_0_40px_rgba(0,255,255,0.08)] flex items-start gap-3">
+                        <div className="mt-0.5 w-8 h-8 rounded-xl bg-cyan-500/10 flex items-center justify-center shrink-0">
+                            <span className="text-base">✨</span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-xs font-black text-white uppercase tracking-wider mb-1">Pro Tip</p>
+                            <p className="text-[11px] text-white/50 leading-relaxed">Refresh your browser once for the best experience on this page.</p>
+                        </div>
+                        <button
+                            onClick={() => setShowRefreshTip(false)}
+                            className="shrink-0 w-6 h-6 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors mt-0.5"
+                        >
+                            <X size={12} className="text-white/40" />
+                        </button>
                     </div>
                 </div>
             )}

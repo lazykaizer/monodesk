@@ -30,7 +30,7 @@ export default function RoadmapSidebar() {
     } = useRoadmapStore();
 
     return (
-        <aside className="w-64 fixed top-0 left-0 h-screen pt-16 bg-[#191919] border-r border-white/10 flex flex-col z-50 select-none text-zinc-400 group/sidebar">
+        <aside className="hidden lg:flex lg:flex-col w-64 fixed top-0 left-0 h-screen pt-16 bg-[#191919] border-r border-white/10 z-50 select-none text-zinc-400 group/sidebar">
 
 
             {/* Top Navigation */}

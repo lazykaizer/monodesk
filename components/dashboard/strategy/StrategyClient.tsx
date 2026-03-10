@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
     Shield, Zap, Target, AlertTriangle, Plus,
     ArrowRight, Sparkles, MoreHorizontal, TrendingUp, X, Save,
@@ -56,6 +56,15 @@ export default function StrategyClient() {
             setProjectName(taskData.analysis_data.projectName);
         }
     }, [task?.input, task?.data]);
+
+    // When project switches, clear input so sync button shows for new project
+    const prevProjectIdRef = useRef(activeProjectId);
+    useEffect(() => {
+        if (prevProjectIdRef.current !== activeProjectId) {
+            prevProjectIdRef.current = activeProjectId;
+            setUserInput("");
+        }
+    }, [activeProjectId]);
 
     // --- STATE ---
     const swotData = taskData?.swot || [];
@@ -195,7 +204,7 @@ export default function StrategyClient() {
     };
 
     return (
-        <div className="min-h-screen bg-[#020202] text-white p-8 font-sans pb-24 relative overflow-hidden">
+        <div className="min-h-screen bg-[#020202] text-white px-3 pt-3 lg:p-8 font-sans pb-28 lg:pb-24 relative overflow-hidden">
             {/* TACTICAL GRID BACKGROUND */}
             <div className="absolute inset-0 z-0 opacity-[0.05] pointer-events-none"
                 style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '60px 60px' }} />
@@ -222,7 +231,7 @@ export default function StrategyClient() {
             </motion.div>
 
             {/* HEADER */}
-            <header className="relative z-10 flex justify-between items-center mb-12 border-b border-white/5 pb-6">
+            <header className="relative z-10 flex justify-between items-start mb-3 lg:mb-12 border-b border-white/5 pb-3 lg:pb-6 gap-3">
                 <div className="flex items-center gap-6">
                     <div className="flex flex-col">
                         <h1 className="text-2xl font-black font-mono tracking-tighter text-white flex items-center gap-2">
@@ -230,27 +239,27 @@ export default function StrategyClient() {
                             STRATEGY DECK
                         </h1>
                         {projectName && (
-                            <div className="flex items-center gap-2 ml-8 mt-1">
-                                <span className="text-[10px] font-mono text-orange-500/50 uppercase tracking-[0.3em]">
+                            <div className="flex items-center gap-2 ml-8 mt-1 max-w-[160px] lg:max-w-none">
+                                <span className="text-[10px] font-mono text-orange-500/50 uppercase tracking-[0.3em] hidden lg:inline">
                                     ACTIVE_INTEL:
                                 </span>
-                                <span className="text-[10px] font-mono text-white/70 uppercase tracking-widest font-bold">
+                                <span className="text-[10px] font-mono text-white/70 uppercase tracking-widest font-bold truncate">
                                     {projectName}
                                 </span>
                             </div>
                         )}
                     </div>
                 </div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2 shrink-0">
                     {(swotData.length > 0 || userInput.trim() !== "" || projectName !== "") && (
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={handleClear}
-                            className="bg-red-500/5 border border-red-500/20 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all h-10 w-10 rounded-lg"
+                            className="hidden lg:flex bg-red-500/5 border border-red-500/20 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all h-9 w-9 lg:h-10 lg:w-10 rounded-lg"
                             title="Clear Current Briefing"
                         >
-                            <X size={18} />
+                            <X size={16} />
                         </Button>
                     )}
                     <ProjectSyncButton module="strategy" data={task?.data} disabled={!task?.data} context={{ name: projectName || userInput.slice(0, 50), description: userInput }} />
@@ -258,26 +267,26 @@ export default function StrategyClient() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setIsHistoryOpen(true)}
-                        className="bg-white/5 border border-white/10 rounded-lg px-4 h-10 hover:bg-white/10 transition-all font-mono text-[10px] tracking-widest uppercase"
+                        className="bg-white/5 border border-white/10 rounded-lg px-3 lg:px-4 h-9 lg:h-10 hover:bg-white/10 transition-all font-mono text-[10px] tracking-widest uppercase"
                     >
-                        <HistoryIcon size={14} className="mr-2" />
-                        Neural Cache
+                        <HistoryIcon size={14} className="lg:mr-2" />
+                        <span className="hidden lg:inline">Neural Cache</span>
                     </Button>
                 </div>
             </header>
 
             {/* MAIN CONTENT AREA */}
-            <main className="relative z-10 max-w-6xl mx-auto space-y-12">
+            <main className="relative z-10 max-w-6xl mx-auto space-y-4 lg:space-y-12">
                 {/* INPUT SECTION (WAR ROOM) */}
-                <section className="space-y-6">
+                <section className="space-y-2 lg:space-y-6">
                     <div className="relative group">
                         <div className="absolute -inset-1 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl blur opacity-10 group-focus-within:opacity-20 transition duration-500" />
-                        <div className="relative bg-[#080808]/80 backdrop-blur-xl border border-white/10 rounded-2xl p-2 flex flex-col gap-2">
+                        <div className="relative bg-[#080808]/80 backdrop-blur-xl border border-white/10 rounded-xl lg:rounded-2xl p-1 lg:p-2 flex flex-col gap-1 lg:gap-2">
                             <div className="flex items-center px-4 pt-2">
                                 <Terminal size={14} className="text-zinc-600 mr-2" />
                                 <span className="text-[10px] font-mono text-zinc-600 uppercase tracking-widest">Awaiting Command...</span>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-col lg:flex-row lg:items-center gap-2">
                                 <div className="flex-1">
                                     {currentProject && !userInput && (
                                         <button
@@ -285,22 +294,22 @@ export default function StrategyClient() {
                                             className="px-4 py-1 text-[10px] text-blue-400 hover:text-blue-300 font-bold tracking-widest uppercase flex items-center gap-2 transition-colors mb-1"
                                         >
                                             <Rocket size={12} />
-                                            Synchronize with {currentProject.name} concept
+                                            Sync with {currentProject.name}
                                         </button>
                                     )}
                                     <textarea
                                         value={userInput}
                                         onChange={(e) => setUserInput(e.target.value)}
-                                        placeholder="INITIATE STRATEGIC SITREP: Describe the objective..."
-                                        className="w-full bg-transparent border-none outline-none text-white px-4 py-2 font-mono text-sm placeholder-zinc-800 focus:ring-0 resize-none h-12 scrollbar-hide"
+                                        placeholder="Describe the objective..."
+                                        className="w-full bg-transparent border-none outline-none text-white px-4 py-2 font-mono text-sm placeholder-zinc-700 focus:ring-0 resize-none min-h-[48px] scrollbar-hide"
                                     />
                                 </div>
-                                <div className="flex items-center gap-2 px-4">
+                                <div className="flex items-center gap-2 px-4 pb-2 lg:pb-0">
                                     <Button
                                         onClick={() => handleAnalyze()}
                                         disabled={!userInput.trim() && !isAnalyzing}
                                         className={cn(
-                                            "h-10 px-6 rounded-xl font-mono text-[10px] font-black tracking-widest uppercase transition-all flex items-center gap-2",
+                                            "w-full lg:w-auto h-10 px-6 rounded-xl font-mono text-[10px] font-black tracking-widest uppercase transition-all flex items-center justify-center gap-2",
                                             isAnalyzing
                                                 ? "bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30"
                                                 : "bg-white text-black hover:bg-zinc-200 shadow-[0_0_20px_rgba(255,255,255,0.1)]"
@@ -314,6 +323,18 @@ export default function StrategyClient() {
                     </div>
                 </section>
 
+                {/* Mobile clear button — between input and output */}
+                {swotData.length > 0 && (
+                    <div className="flex lg:hidden justify-end">
+                        <button
+                            onClick={handleClear}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest text-red-400 bg-red-500/5 border border-red-500/20 hover:bg-red-500/10 transition-all"
+                        >
+                            <X size={12} /> Clear
+                        </button>
+                    </div>
+                )}
+
                 <AnimatePresence mode="wait">
                     {isAnalyzing ? (
                         <motion.div
@@ -321,7 +342,7 @@ export default function StrategyClient() {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="flex flex-col items-center justify-center py-20 space-y-6"
+                            className="flex flex-col items-center justify-center py-10 lg:py-20 space-y-4 lg:space-y-6"
                         >
                             <div className="relative w-24 h-24">
                                 <motion.div
@@ -343,7 +364,7 @@ export default function StrategyClient() {
                             key="empty"
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="flex flex-col items-center justify-center py-32 text-center"
+                            className="flex flex-col items-center justify-center py-16 lg:py-32 text-center"
                         >
                             <Shield size={64} className="mb-6 text-zinc-800 opacity-20" />
                             <h2 className="text-xl font-black font-mono text-zinc-800 uppercase tracking-[0.2em]">Strategy Engine Is Offline</h2>
@@ -363,13 +384,13 @@ export default function StrategyClient() {
                             key="results"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className="space-y-12"
+                            className="space-y-4 lg:space-y-12"
                         >
                             {/* EXECUTIVE BRIEF (COMMANDER'S INTENT) */}
                             <section>
                                 <div className="relative group">
                                     <div className="absolute -inset-0.5 bg-gradient-to-r from-orange-500/50 to-red-600/50 rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-500" />
-                                    <div className="relative bg-[#0d0d0d] border border-orange-500/20 rounded-2xl p-8 overflow-hidden shadow-2xl">
+                                    <div className="relative bg-[#0d0d0d] border border-orange-500/20 rounded-2xl p-5 lg:p-8 overflow-hidden shadow-2xl">
                                         <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
                                             <Shield size={120} className="text-orange-500" />
                                         </div>
@@ -377,22 +398,27 @@ export default function StrategyClient() {
                                             <Sparkles className="text-orange-400" size={18} />
                                             <h2 className="text-sm font-black font-mono text-orange-400 tracking-[0.3em] uppercase">COMMANDER&apos;S_INTENT</h2>
                                         </div>
-                                        <p className="text-xl font-black text-white leading-relaxed italic pr-12">
-                                            &quot;{commanderIntent || "Strategic synthesis in progress. Standardizing operational objectives for immediate deployment."}&quot;
+                                        {/* Mobile: no quotes */}
+                                        <p className="lg:hidden text-base font-black text-white leading-relaxed italic pr-4">
+                                            {(commanderIntent || "Strategic synthesis in progress. Standardizing operational objectives for immediate deployment.").replace(/^["\u201C]|["\u201D]$/g, '')}
+                                        </p>
+                                        {/* Desktop: no quotes */}
+                                        <p className="hidden lg:block text-xl font-black text-white leading-relaxed italic pr-12">
+                                            {commanderIntent || "Strategic synthesis in progress. Standardizing operational objectives for immediate deployment."}
                                         </p>
                                         <div className="mt-6 flex items-center justify-between">
-                                            <div className="flex gap-2">
-                                                <Badge variant="outline" className="text-[9px] font-mono border-zinc-800 text-zinc-500 uppercase tracking-widest">Confidence: 94%</Badge>
-                                                <Badge variant="outline" className="text-[9px] font-mono border-zinc-800 text-zinc-500 uppercase tracking-widest">Risk Level: Moderate</Badge>
+                                            <div className="flex flex-row gap-2">
+                                                <Badge variant="outline" className="text-[9px] font-mono border-zinc-800 text-zinc-500 uppercase tracking-widest w-fit">Confidence: 94%</Badge>
+                                                <Badge variant="outline" className="text-[9px] font-mono border-zinc-800 text-zinc-500 uppercase tracking-widest w-fit">Risk Level: Moderate</Badge>
                                             </div>
-                                            <div className="text-[9px] font-mono text-zinc-700 uppercase">Operational Protocol: Active</div>
+                                            <div className="hidden lg:block text-[9px] font-mono text-zinc-700 uppercase">Operational Protocol: Active</div>
                                         </div>
                                     </div>
                                 </div>
                             </section>
 
                             {/* SWOT GRID (INTERACTIVE ACCORDIONS) */}
-                            <section className="space-y-6">
+                            <section className="space-y-3 lg:space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-[10px] font-black font-mono text-zinc-500 tracking-[0.4em] uppercase flex items-center gap-2">
                                         <LayoutGrid size={14} /> SWOT_TACTICAL_GRID
@@ -401,7 +427,7 @@ export default function StrategyClient() {
                                     <Badge className="bg-white/5 border-white/10 text-[9px] font-mono text-zinc-500 uppercase px-3">Filter: All</Badge>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 lg:gap-4">
                                     <SwotSection
                                         title="STRENGTHS"
                                         items={swotData.filter((i: SwotItem) => i.type === 'strength')}
@@ -438,7 +464,7 @@ export default function StrategyClient() {
                             </section>
 
                             {/* ACTION PLAN (GRID) */}
-                            <section className="space-y-6">
+                            <section className="space-y-3 lg:space-y-6">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-[10px] font-black font-mono text-zinc-500 tracking-[0.4em] uppercase flex items-center gap-2">
                                         <ListTodo size={14} /> OPERATIONAL_ROADMAP
@@ -446,7 +472,7 @@ export default function StrategyClient() {
                                     <div className="h-px flex-1 bg-white/5 mx-6" />
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-6">
                                     {generatedStrategies.map((strat: StrategyPair) => (
                                         <ActionCard key={strat.id} strat={strat} onCopy={() => copyToClipboard(strat.description)} />
                                     ))}
@@ -473,7 +499,7 @@ export default function StrategyClient() {
                             animate={{ x: 0 }}
                             exit={{ x: '100%' }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="relative w-96 h-full bg-[#080808] border-l border-white/10 shadow-2xl p-8 flex flex-col"
+                            className="relative w-full lg:w-96 h-full bg-[#080808] border-l border-white/10 shadow-2xl p-5 lg:p-8 flex flex-col"
                         >
                             <div className="flex items-center justify-between mb-10">
                                 <div>
@@ -579,8 +605,8 @@ function SwotAccordion({ item, color, border }: { item: SwotItem, color: string,
                         transition={{ duration: 0.3, ease: "easeInOut" }}
                     >
                         <div className="px-4 pb-4 border-t border-white/5 mt-0 pt-3">
-                            <p className="text-xs text-zinc-400 font-medium leading-relaxed italic">
-                                &quot;{item.description}&quot;
+                            <p className="text-xs text-zinc-400 font-medium leading-relaxed">
+                                {item.description.replace(/^["\u201C]|["\u201D]$/g, '')}
                             </p>
                         </div>
                     </motion.div>

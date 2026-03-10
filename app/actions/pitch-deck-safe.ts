@@ -102,7 +102,7 @@ export async function fetchPitchDeckHistory() {
 
     if (error) {
         console.error("fetchPitchDeckHistory server error:", error);
-        throw error;
+        throw new Error(error.message);
     }
 
     if (!data) return [];
@@ -135,7 +135,7 @@ export async function fetchPitchDeckById(id: string) {
 
     if (error) {
         console.error(`fetchPitchDeckById server error for ${id}:`, error);
-        throw error;
+        throw new Error(error.message);
     }
     return data;
 }
@@ -151,6 +151,6 @@ export async function deletePitchDeckAction(deckId: string) {
         .eq('id', deckId)
         .eq('user_id', user.id);
 
-    if (error) throw error;
+    if (error) throw new Error(error.message);
     return { success: true };
 }

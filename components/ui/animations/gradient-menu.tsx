@@ -15,7 +15,7 @@ const menuItems = [
     { title: 'Pitch Deck', icon: <Briefcase />, href: '/dashboard/pitch', gradientFrom: '#00b09b', gradientTo: '#96c93d' }
 ];
 
-export default function GradientMenu() {
+export default function GradientMenu({ nowrap }: { nowrap?: boolean } = {}) {
     const pathname = usePathname();
 
     // Filter out the active page from the menu
@@ -23,13 +23,13 @@ export default function GradientMenu() {
 
     return (
         <div className="relative w-full max-w-6xl transition-all duration-500">
-            <ul className="flex gap-4 justify-center flex-wrap">
+            <ul className={cn("flex gap-4", nowrap ? "flex-nowrap justify-start" : "flex-wrap justify-center")}>
                 {visibleItems.map(({ title, icon, href, gradientFrom, gradientTo }, idx) => (
                     <li
                         key={idx}
                         // @ts-ignore
                         style={{ '--gradient-from': gradientFrom, '--gradient-to': gradientTo }}
-                        className="relative w-[60px] h-[60px] bg-white shadow-lg rounded-full flex items-center justify-center transition-all duration-500 hover:w-[200px] hover:shadow-none group cursor-pointer"
+                        className="relative w-[60px] h-[60px] shrink-0 bg-white shadow-lg rounded-full flex items-center justify-center transition-all duration-500 hover:w-[200px] hover:shadow-none group cursor-pointer"
                     >
                         <Link href={href} className="flex items-center justify-center w-full h-full absolute inset-0 rounded-full z-20">
                             {/* Gradient background on hover moved to li but controlled via group-hover */}

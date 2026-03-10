@@ -14,7 +14,7 @@ export async function fetchStrategyHistory() {
         .order('created_at', { ascending: false });
 
     if (error) {
-        throw error;
+        throw new Error(error.message);
     }
 
     return data || [];
@@ -46,7 +46,7 @@ export async function saveStrategyToHistory(strategyData: {
         .single();
 
     if (error) {
-        throw error;
+        throw new Error(error.message);
     }
 
     return data;
@@ -64,7 +64,7 @@ export async function deleteStrategyFromHistory(id: string) {
         .eq('user_id', user.id);
 
     if (error) {
-        throw error;
+        throw new Error(error.message);
     }
 
     return { success: true };

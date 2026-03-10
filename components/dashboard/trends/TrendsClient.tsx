@@ -151,14 +151,14 @@ export default function TrendsClient() {
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-cyan-500/20 to-purple-500/20 rounded-full blur-[120px] pointer-events-none z-0" />
 
             {/* Page Header (Internal to Page, below Global Topbar) */}
-            <div className="flex items-center justify-between pl-8 pr-4 pt-4 pb-6 relative z-20">
-                <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
+                <div className="flex items-center justify-between pl-4 lg:pl-8 pr-4 pt-0 lg:pt-4 pb-0 lg:pb-6 relative z-20">
+                <div className="flex items-center gap-2 lg:gap-4">
+                    <div className="hidden lg:flex w-10 h-10 bg-blue-600 rounded-xl items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
                         <TrendingUp size={20} className="text-white" />
                     </div>
                     <div>
                         <h1 className="text-4xl font-black tracking-tight text-white uppercase">TREND HUNTER</h1>
-                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-[0.4em] mt-1">Global Intelligence Command</p>
+                        <p className="hidden lg:block text-[10px] text-zinc-500 font-bold uppercase tracking-[0.4em] mt-1">Global Intelligence Command</p>
                     </div>
                 </div>
 
@@ -168,7 +168,7 @@ export default function TrendsClient() {
                             variant="ghost"
                             size="icon"
                             onClick={handleClear}
-                            className="bg-red-500/5 border border-red-500/20 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all h-10 w-10 rounded-xl"
+                            className="max-lg:hidden bg-red-500/5 border border-red-500/20 text-zinc-600 hover:text-red-500 hover:bg-red-500/10 transition-all h-10 w-10 rounded-xl"
                             title="Clear Analysis"
                         >
                             <X size={18} />
@@ -182,7 +182,7 @@ export default function TrendsClient() {
                         className="flex items-center gap-2 px-4 h-10 bg-white/5 border border-white/10 rounded-xl group hover:bg-white/10 transition-all text-zinc-400 hover:text-white"
                     >
                         <HistoryIcon size={18} />
-                        <span className="text-xs font-bold tracking-widest uppercase transition-colors">History</span>
+                        <span className="hidden lg:inline text-xs font-bold tracking-widest uppercase transition-colors">History</span>
                     </Button>
                 </div>
             </div>
@@ -196,7 +196,7 @@ export default function TrendsClient() {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 1.05 }}
-                            className="flex-1 flex flex-col items-center justify-center p-6 relative"
+                            className="flex-1 flex flex-col items-center justify-center px-4 lg:p-6 relative"
                         >
                             <div className="w-full max-w-3xl space-y-8 text-center">
                                 <motion.div
@@ -204,10 +204,10 @@ export default function TrendsClient() {
                                     animate={{ y: 0, opacity: 1 }}
                                     transition={{ delay: 0.2 }}
                                 >
-                                    <h2 className="text-4xl md:text-5xl font-black mb-4 tracking-tight">
+                                    <h2 className="text-3xl lg:text-5xl font-black mb-3 lg:mb-4 tracking-tight">
                                         Hunting the <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-600">Future.</span>
                                     </h2>
-                                    <p className="text-zinc-400 text-lg max-w-xl mx-auto font-medium">
+                                    <p className="text-zinc-400 text-sm lg:text-lg max-w-xl mx-auto font-medium">
                                         Scan global sectors and niche markets to discover exponential opportunities before they go mainstream.
                                     </p>
                                 </motion.div>
@@ -226,17 +226,17 @@ export default function TrendsClient() {
                                             value={searchTerm}
                                             onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
                                             onKeyDown={(e) => handleSearch(e)}
-                                            placeholder="Discover the next big opportunity... (e.g., 'Micro-SaaS for Dentists')"
-                                            className="flex-1 bg-transparent border-none outline-none text-xl font-bold uppercase tracking-wider placeholder:text-zinc-700 text-white"
+                                            placeholder="DISCOVER THE NEXT BIG..."
+                                            className="flex-1 min-w-0 bg-transparent border-none outline-none text-xl font-bold uppercase tracking-wider placeholder:text-zinc-700 text-white"
                                             autoFocus
                                         />
                                         <Button
                                             onClick={() => handleSearch()}
                                             disabled={!searchTerm.trim()}
-                                            className="ml-4 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl px-6 h-10 font-bold tracking-widest uppercase transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
+                                            className="ml-2 lg:ml-4 shrink-0 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl lg:px-6 px-3 h-10 font-bold tracking-widest uppercase transition-all shadow-[0_0_20px_rgba(6,182,212,0.3)]"
                                         >
-                                            <Rocket size={18} className="mr-2" />
-                                            Scale
+                                            <Rocket size={18} className="lg:mr-2" />
+                                            <span className="hidden lg:inline">Scale</span>
                                         </Button>
                                     </div>
                                 </motion.div>
@@ -293,10 +293,10 @@ export default function TrendsClient() {
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}
                                         exit={{ opacity: 0 }}
-                                        className="absolute inset-0 z-[60] bg-[#0a0a0a]/90 backdrop-blur-xl flex flex-col items-center justify-center p-12 overflow-hidden"
+                                        className="fixed lg:absolute inset-0 z-[200] bg-[#0a0a0a]/90 backdrop-blur-xl flex flex-col items-center justify-center p-4 lg:p-12 overflow-hidden"
                                     >
                                         {/* Scanner UI */}
-                                        <div className="relative w-64 h-64 mb-12">
+                                        <div className="relative w-48 h-48 lg:w-64 lg:h-64 mb-6 lg:mb-12">
                                             <motion.div
                                                 animate={{ rotate: 360 }}
                                                 transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
@@ -381,7 +381,7 @@ export default function TrendsClient() {
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            onClick={() => setTask('trends', { status: 'idle', data: null, input: "" })}
+                                            onClick={handleClear}
                                             className="h-12 w-12 text-zinc-500 hover:text-red-500 hover:bg-red-500/10 transition-all rounded-xl border border-white/5"
                                         >
                                             <X size={20} />
@@ -536,28 +536,55 @@ export default function TrendsClient() {
                 </AnimatePresence>
             </main>
 
-            {/* Live Ticker Banner */}
-            <footer className="h-10 border-t border-white/5 bg-black/40 backdrop-blur-sm z-50 flex items-center overflow-hidden whitespace-nowrap opacity-50 select-none pointer-events-none">
-                <motion.div
-                    animate={{ x: [0, -1000] }}
-                    transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                    className="flex gap-12 px-12 items-center"
-                >
-                    {[...Array(20)].map((_, i) => (
-                        <div key={i} className="flex gap-12 items-center">
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
-                                <Activity size={10} className="text-cyan-500" /> Analyzing 50M+ Data Points...
-                            </span>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
-                                <Globe size={10} className="text-blue-500" /> Tracking Emerging Niches...
-                            </span>
-                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
-                                <Zap size={10} className="text-cyan-500" /> Monitoring Social Signals...
-                            </span>
-                        </div>
-                    ))}
-                </motion.div>
-            </footer>
+            {/* Live Ticker Banner — fixed above footer on mobile (idle only), normal flow on desktop */}
+            {!apiData && !isScanning && (
+            <>
+                {/* Mobile: fixed above bottom nav */}
+                <div className="lg:hidden fixed bottom-20 left-0 right-0 h-10 border-t border-white/5 bg-black/80 backdrop-blur-sm z-50 flex items-center overflow-hidden whitespace-nowrap opacity-50 select-none pointer-events-none">
+                    <motion.div
+                        animate={{ x: [0, -1000] }}
+                        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                        className="flex gap-12 px-12 items-center"
+                    >
+                        {[...Array(20)].map((_, i) => (
+                            <div key={i} className="flex gap-12 items-center">
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
+                                    <Activity size={10} className="text-cyan-500" /> Analyzing 50M+ Data Points...
+                                </span>
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
+                                    <Globe size={10} className="text-blue-500" /> Tracking Emerging Niches...
+                                </span>
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
+                                    <Zap size={10} className="text-cyan-500" /> Monitoring Social Signals...
+                                </span>
+                            </div>
+                        ))}
+                    </motion.div>
+                </div>
+                {/* Desktop: normal flow footer */}
+                <footer className="hidden lg:flex h-10 border-t border-white/5 bg-black/40 backdrop-blur-sm z-50 items-center overflow-hidden whitespace-nowrap opacity-50 select-none pointer-events-none">
+                    <motion.div
+                        animate={{ x: [0, -1000] }}
+                        transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                        className="flex gap-12 px-12 items-center"
+                    >
+                        {[...Array(20)].map((_, i) => (
+                            <div key={i} className="flex gap-12 items-center">
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
+                                    <Activity size={10} className="text-cyan-500" /> Analyzing 50M+ Data Points...
+                                </span>
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
+                                    <Globe size={10} className="text-blue-500" /> Tracking Emerging Niches...
+                                </span>
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em] flex items-center gap-2">
+                                    <Zap size={10} className="text-cyan-500" /> Monitoring Social Signals...
+                                </span>
+                            </div>
+                        ))}
+                    </motion.div>
+                </footer>
+            </>
+            )}
 
             {/* History Sidebar */}
             <AnimatePresence>

@@ -27,22 +27,38 @@ export const RoadmapBlockRenderer = ({ block, dragHandleProps }: Props) => {
     const children = blocks.filter(b => b.parentId === block.id).sort((a, b) => a.order - b.order);
 
     useEffect(() => {
-        // ... (rest of the content sync logic)
+        // Auto-resize textarea height
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
             textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
         }
     }, [block.content]);
 
+    // Auto-focus textarea when block TYPE changes (e.g. after selecting command from menu)
+    useEffect(() => {
+        if (['h1', 'h2', 'h3', 'quote', 'callout', 'toggle', 'bullet', 'numbered', 'checklist', 'code', 'text'].includes(block.type)) {
+            // Small timeout so the new DOM element has mounted
+            const t = setTimeout(() => {
+                textareaRef.current?.focus();
+            }, 50);
+            return () => clearTimeout(t);
+        }
+    }, [block.type]);
+
     const handleContentChange = (content: string) => {
         updateBlock(block.id, { content });
 
-        // Detect "/" and following text
+        // Detect "/" (desktop) or "." (mobile/touch) as command trigger
+        const isTouchDevice = typeof navigator !== 'undefined' && navigator.maxTouchPoints > 0;
         const slashIndex = content.lastIndexOf('/');
-        if (slashIndex !== -1) {
-            const query = content.slice(slashIndex + 1);
-            // Only trigger if "/" is at the start or preceded by a space
-            if (slashIndex === 0 || content[slashIndex - 1] === ' ') {
+        const dotIndex = isTouchDevice ? content.lastIndexOf('.') : -1;
+        // Use whichever trigger appeared last in the string
+        const triggerIndex = dotIndex > slashIndex ? dotIndex : slashIndex;
+
+        if (triggerIndex !== -1) {
+            const query = content.slice(triggerIndex + 1);
+            // Only trigger if char is at start or preceded by a space
+            if (triggerIndex === 0 || content[triggerIndex - 1] === ' ') {
                 setSlashQuery(query);
 
                 // If menu isn't open for this block, open it
@@ -91,9 +107,9 @@ export const RoadmapBlockRenderer = ({ block, dragHandleProps }: Props) => {
                             addHistory(block.id, e.target.value, 'updated', 'h1');
                         }}
                         onKeyDown={handleKeyDown}
-                        placeholder=""
+                        placeholder="Heading 1"
                         onFocus={() => setFocusedId(block.id)}
-                        className="w-full bg-transparent border-none text-4xl font-black focus:ring-0 outline-none resize-none placeholder:text-zinc-400 leading-normal py-2"
+                        className="w-full bg-transparent border-none text-4xl font-black focus:ring-0 outline-none resize-none placeholder:text-zinc-800 leading-normal py-2"
                         style={{ color: '#ffffff' }}
                         rows={1}
                     />
@@ -108,9 +124,9 @@ export const RoadmapBlockRenderer = ({ block, dragHandleProps }: Props) => {
                             addHistory(block.id, e.target.value, 'updated', 'h2');
                         }}
                         onKeyDown={handleKeyDown}
-                        placeholder=""
+                        placeholder="Heading 2"
                         onFocus={() => setFocusedId(block.id)}
-                        className="w-full bg-transparent border-none text-2xl font-black focus:ring-0 outline-none resize-none placeholder:text-zinc-400 leading-tight py-1.5"
+                        className="w-full bg-transparent border-none text-2xl font-black focus:ring-0 outline-none resize-none placeholder:text-zinc-800 leading-tight py-1.5"
                         style={{ color: '#ffffff' }}
                         rows={1}
                     />
@@ -125,9 +141,9 @@ export const RoadmapBlockRenderer = ({ block, dragHandleProps }: Props) => {
                             addHistory(block.id, e.target.value, 'updated', 'h3');
                         }}
                         onKeyDown={handleKeyDown}
-                        placeholder=""
+                        placeholder="Heading 3"
                         onFocus={() => setFocusedId(block.id)}
-                        className="w-full bg-transparent border-none text-lg font-black focus:ring-0 outline-none resize-none placeholder:text-zinc-400 leading-tight py-1"
+                        className="w-full bg-transparent border-none text-lg font-black focus:ring-0 outline-none resize-none placeholder:text-zinc-800 leading-tight py-1"
                         style={{ color: '#ffffff' }}
                         rows={1}
                     />
@@ -140,8 +156,9 @@ export const RoadmapBlockRenderer = ({ block, dragHandleProps }: Props) => {
                             value={block.content}
                             onChange={(e) => handleContentChange(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder=""
-                            className="w-full bg-transparent border-none text-xl font-medium focus:ring-0 outline-none resize-none placeholder:text-zinc-400 leading-relaxed"
+                            placeholder="Type a quote..."
+                            onFocus={() => setFocusedId(block.id)}
+                            className="w-full bg-transparent border-none text-xl font-medium focus:ring-0 outline-none resize-none placeholder:text-zinc-800 leading-relaxed"
                             style={{ color: '#ffffff' }}
                             rows={1}
                         />
@@ -181,8 +198,9 @@ export const RoadmapBlockRenderer = ({ block, dragHandleProps }: Props) => {
                                 value={block.content}
                                 onChange={(e) => handleContentChange(e.target.value)}
                                 onKeyDown={handleKeyDown}
-                                placeholder=""
-                                className="flex-1 bg-transparent border-none text-base font-bold focus:ring-0 outline-none resize-none placeholder:text-zinc-400"
+                                placeholder="Toggle heading..."
+                                onFocus={() => setFocusedId(block.id)}
+                                className="flex-1 bg-transparent border-none text-base font-bold focus:ring-0 outline-none resize-none placeholder:text-zinc-800"
                                 style={{ color: '#ffffff' }}
                                 rows={1}
                             />
@@ -393,7 +411,6 @@ export const RoadmapBlockRenderer = ({ block, dragHandleProps }: Props) => {
                 return (
                     <div className="flex gap-4 p-4 my-4 bg-zinc-900/50 border border-white/5 rounded-xl text-zinc-300">
                         <div className="shrink-0 mt-1">
-                            {/* Default Icon */}
                             <Lightbulb size={24} className="text-amber-500" />
                         </div>
                         <textarea
@@ -401,8 +418,9 @@ export const RoadmapBlockRenderer = ({ block, dragHandleProps }: Props) => {
                             value={block.content}
                             onChange={(e) => handleContentChange(e.target.value)}
                             onKeyDown={handleKeyDown}
-                            placeholder=""
-                            className="w-full bg-transparent border-none text-base font-medium focus:ring-0 outline-none resize-none placeholder:text-zinc-400 leading-relaxed"
+                            placeholder="Add a callout note..."
+                            onFocus={() => setFocusedId(block.id)}
+                            className="w-full bg-transparent border-none text-base font-medium focus:ring-0 outline-none resize-none placeholder:text-zinc-700 leading-relaxed"
                             style={{ color: '#ffffff' }}
                             rows={1}
                         />
