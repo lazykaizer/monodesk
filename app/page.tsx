@@ -2,6 +2,8 @@ import Link from "next/link";
 import { AnimatedHero } from "@/components/ui/animations/animated-hero";
 import MonodeskHero from "@/components/MonodeskHero";
 import FooterCTA from "@/components/FooterCTA";
+import FoundersProblem from "@/components/FoundersProblem";
+import AppPreview from "@/components/AppPreview";
 
 export default function Home() {
   return (
@@ -12,6 +14,12 @@ export default function Home() {
 
       {/* Hero Section */}
       <AnimatedHero />
+
+      {/* Founder's Problem Section */}
+      <FoundersProblem />
+
+      {/* App Preview Section */}
+      <AppPreview />
 
       {/* Footer CTA */}
       <FooterCTA />

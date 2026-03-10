@@ -286,7 +286,7 @@ export default function SignupPage() {
                                         <div className="flex items-start gap-3 px-1">
                                             <input type="checkbox" required className="mt-1 w-4 h-4 rounded-sm border-white/10 bg-white/5 checked:bg-[#FF5C00] transition-colors accent-[#FF5C00]" />
                                             <p className="text-[11px] text-white/20 leading-relaxed font-bold">
-                                                I agree to the <Link href="#" className="underline text-orange-500/50 hover:text-orange-500 transition-colors">Terms of Service</Link> and <Link href="#" className="underline text-orange-500/50 hover:text-orange-500 transition-colors">Privacy Policy</Link>
+                                                I agree to the <Link href="/legal/terms" className="underline text-orange-500/50 hover:text-orange-500 transition-colors">Terms of Service</Link> and <Link href="/legal/privacy" className="underline text-orange-500/50 hover:text-orange-500 transition-colors">Privacy Policy</Link>
                                             </p>
                                         </div>
 

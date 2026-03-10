@@ -2,7 +2,6 @@ import { useState } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import JSZip from 'jszip';
-import pptxgen from "pptxgenjs";
 import { saveAs } from 'file-saver';
 import { Slide as SlideData } from '../PitchDeckSlide';
 
@@ -173,6 +172,7 @@ export const useExportSystem = () => {
     };
 
     const handlePptStaticExport = async (container: HTMLElement, filename: string) => {
+        const pptxgen = (await import("pptxgenjs")).default;
         const pptx = new pptxgen();
         const slideElements = Array.from(container.children) as HTMLElement[];
 
@@ -188,6 +188,7 @@ export const useExportSystem = () => {
     };
 
     const handlePptEditableExport = async (slides: SlideData[], filename: string) => {
+        const pptxgen = (await import("pptxgenjs")).default;
         const pptx = new pptxgen();
         pptx.layout = 'LAYOUT_WIDE';
 

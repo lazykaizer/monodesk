@@ -19,31 +19,23 @@ export const HomeView = () => {
                 <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-500/10 blur-[100px] rounded-full pointer-events-none" />
 
                 <div className="relative z-10 space-y-4 max-w-2xl">
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold tracking-wider uppercase"
-                    >
-                        <Sparkles size={12} />
-                        Architect Mode
-                    </motion.div>
 
                     <motion.h1
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
-                        className="text-4xl sm:text-5xl font-bold text-white tracking-tight"
+                        className="text-4xl sm:text-5xl font-black text-white tracking-tighter"
                     >
-                        Welcome back to your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Knowledge Hub</span>
+                        Command your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Vision Engine</span>
                     </motion.h1>
 
                     <motion.p
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.2 }}
-                        className="text-zinc-400 text-lg leading-relaxed"
+                        className="text-zinc-500 text-lg leading-relaxed font-medium"
                     >
-                        Capture ideas, build roadmaps, and transform your vision into reality. Your workspace is ready.
+                        Architect executable pathways, synchronize core milestones, and ship products with precision. Your strategic workspace is synchronized.
                     </motion.p>
 
                     <motion.div
@@ -54,23 +46,23 @@ export const HomeView = () => {
                     >
                         <button
                             onClick={() => addPage()}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white text-black font-bold hover:bg-zinc-200 transition-colors shadow-lg shadow-white/5"
+                            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-black font-black text-sm uppercase tracking-widest hover:bg-zinc-200 transition-all active:scale-95 shadow-xl shadow-white/5"
                         >
                             <Plus size={18} />
-                            New Page
+                            Deploy New Page
                         </button>
                     </motion.div>
                 </div>
             </section>
 
-            {/* RECENTLY VISITED */}
+            {/* STRATEGIC PIPELINE */}
             <section className="space-y-8">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-zinc-100 font-semibold text-lg">
-                        <div className="p-2 rounded-lg bg-zinc-800/50 border border-white/5">
-                            <Clock size={18} className="text-blue-400" />
+                    <div className="flex items-center gap-3 text-zinc-100 font-black text-lg uppercase tracking-tighter">
+                        <div className="p-2 rounded-lg bg-zinc-900 border border-white/5">
+                            <Clock size={18} className="text-blue-500" />
                         </div>
-                        <span>Recently visited</span>
+                        <span>Strategic Pipeline</span>
                     </div>
                 </div>
 
@@ -85,7 +77,7 @@ export const HomeView = () => {
                         >
                             <GlowCard
                                 customSize
-                                className="h-full !bg-[#121212] hover:!bg-[#181818] border-white/5 cursor-pointer group"
+                                className="h-full !bg-[#0D0D0D] hover:!bg-[#121212] border-white/5 cursor-pointer group transition-all duration-500"
                                 glowColor="blue"
                             >
                                 <div
@@ -93,7 +85,7 @@ export const HomeView = () => {
                                     onClick={() => setActivePageId(page.id)}
                                 >
                                     <div className="flex items-start justify-between">
-                                        <div className="text-4xl bg-zinc-800/50 w-14 h-14 rounded-2xl flex items-center justify-center border border-white/5 shadow-inner">
+                                        <div className="text-4xl bg-zinc-900/80 w-14 h-14 rounded-2xl flex items-center justify-center border border-white/5 shadow-2xl group-hover:border-blue-500/30 transition-colors">
                                             {page.icon || '📄'}
                                         </div>
                                         <div className="opacity-0 group-hover:opacity-100 transition-opacity">
@@ -102,31 +94,31 @@ export const HomeView = () => {
                                                     e.stopPropagation();
                                                     deletePage(page.id);
                                                 }}
-                                                className="text-zinc-600 hover:text-red-400 p-1.5 bg-white/5 hover:bg-red-500/10 rounded-xl transition-all"
+                                                className="text-zinc-700 hover:text-red-500 p-2 bg-white/5 hover:bg-red-500/10 rounded-xl transition-all"
                                                 title="Delete page"
                                             >
-                                                <Trash2 size={16} />
+                                                <Trash2 size={14} />
                                             </button>
                                         </div>
                                     </div>
 
                                     <div className="space-y-2 flex-1">
-                                        <h3 className="text-base font-bold text-zinc-100 group-hover:text-blue-400 transition-colors truncate">
-                                            {page.title || "Untitled"}
+                                        <h3 className="text-base font-black text-zinc-100 group-hover:text-blue-400 transition-colors truncate uppercase tracking-tight">
+                                            {page.title || "Untitled Blueprint"}
                                         </h3>
-                                        <div className="flex items-center gap-2 text-[11px] text-zinc-500 font-medium">
+                                        <div className="flex items-center gap-2 text-[10px] text-zinc-600 font-black uppercase tracking-widest">
                                             <div className="flex items-center gap-1">
-                                                <FileText size={12} />
-                                                <span>Page</span>
+                                                <FileText size={10} className="text-blue-500/50" />
+                                                <span>Protocol</span>
                                             </div>
-                                            <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                                            <span className="w-1 h-1 rounded-full bg-zinc-800" />
                                             <span>{formatDistanceToNow(page.createdAt)} ago</span>
                                         </div>
                                     </div>
 
                                     <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                                        <span className="text-[10px] text-zinc-600 font-mono uppercase tracking-widest">Workspace</span>
-                                        <BookOpen size={12} className="text-zinc-700" />
+                                        <span className="text-[10px] text-zinc-700 font-mono uppercase tracking-[0.3em] font-black group-hover:text-blue-500/50 transition-colors">Infrastructure</span>
+                                        <BookOpen size={10} className="text-zinc-800" />
                                     </div>
                                 </div>
                             </GlowCard>
@@ -134,19 +126,19 @@ export const HomeView = () => {
                     ))}
 
                     {pages.length === 0 && (
-                        <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-3xl bg-zinc-900/20">
-                            <div className="w-16 h-16 bg-zinc-800/50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/5">
-                                <FileText className="text-zinc-600" size={32} />
+                        <div className="col-span-full py-20 text-center border-2 border-dashed border-white/5 rounded-[32px] bg-zinc-900/10">
+                            <div className="w-20 h-20 bg-zinc-900/80 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-white/5 shadow-2xl">
+                                <FileText className="text-zinc-700" size={32} />
                             </div>
-                            <h3 className="text-zinc-200 font-bold text-lg mb-2">No pages yet</h3>
-                            <p className="text-zinc-500 text-sm max-w-xs mx-auto">
-                                Transform your screen into a powerful architect's canvas. Start by creating your first page.
+                            <h3 className="text-zinc-200 font-black text-2xl mb-3 tracking-tighter uppercase">No Blueprints Initiated</h3>
+                            <p className="text-zinc-600 text-sm max-w-sm mx-auto font-medium leading-relaxed">
+                                Your mission control is empty. Synchronize your vision by initiating your first strategic blueprint.
                             </p>
                             <button
                                 onClick={() => addPage()}
-                                className="mt-6 px-6 py-2 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-400 text-sm font-bold hover:bg-blue-600/20 transition-all"
+                                className="mt-8 px-8 py-3 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-400 text-xs font-black uppercase tracking-[0.2em] hover:bg-blue-600/20 transition-all active:scale-95"
                             >
-                                Get Started
+                                Initiate Deployment
                             </button>
                         </div>
                     )}

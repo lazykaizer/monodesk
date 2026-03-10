@@ -7,7 +7,7 @@ export default function FooterCTA() {
             <div className="max-w-7xl mx-auto">
                 {/* Footer CTA */}
                 <div className="text-center">
-                    <div className="my-12 flex flex-col gap-0">
+                    <div className="mt-0 mb-8 flex flex-col gap-0">
                         <MarqueeAnimation baseVelocity={-2} className="text-white" direction="left">
                             DESIGN STYLE ANALYTICS IMAGE VIDEO LOGO TREND PITCHDECK
                         </MarqueeAnimation>

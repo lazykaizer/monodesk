@@ -34,7 +34,11 @@ export const RoadmapCopilot = () => {
         }
     ]);
 
-    const { blocks, activePageId, addDatabaseRow, updateDatabaseRow, setActiveView, updateBlock, addBlock, addDatabaseProperty } = useRoadmapStore();
+    const {
+        blocks, activePageId, addDatabaseRow, updateDatabaseRow,
+        setActiveView, updateBlock, addBlock, addDatabaseProperty,
+        updatePage, deleteBlock, addDatabaseView
+    } = useRoadmapStore();
     const chatEndRef = useRef<HTMLDivElement>(null);
     const dragControls = useDragControls();
     const [windowSize, setWindowSize] = useState({ width: 1200, height: 800 });
@@ -74,9 +78,9 @@ export const RoadmapCopilot = () => {
     }, [messages, isOpen]);
 
     const handleAction = async (action: any) => {
-        if (!action) return;
+        if (!action || !activePageId) return;
 
-        console.log("Copilot Executing Action:", action);
+        console.log("Copilot Executing High-Performance Action:", action);
 
         switch (action.type) {
             case 'create_tasks':
@@ -84,10 +88,7 @@ export const RoadmapCopilot = () => {
                 let targetDb = pageContext[0]?.id;
 
                 if (!targetDb) {
-                    toast.info("Creating a new table for your plan...");
                     addBlock('database');
-
-                    // Small delay to allow store to update so we can find the new DB
                     await new Promise(resolve => setTimeout(resolve, 300));
                     const newBlocks = useRoadmapStore.getState().blocks;
                     const newDb = newBlocks.find(b => b.type === 'database' && b.pageId === activePageId);
@@ -95,29 +96,6 @@ export const RoadmapCopilot = () => {
                 }
 
                 if (targetDb && action.tasks) {
-                    const dbBlock = useRoadmapStore.getState().blocks.find(b => b.id === targetDb);
-
-                    // SMART PROPERTY SYNC: Ensure database has necessary columns
-                    if (dbBlock?.data) {
-                        const existingKeys = dbBlock.data.properties.map(p => p.key);
-                        const requiredProps: { key: string, label: string, type: any }[] = [];
-
-                        action.tasks.forEach((t: any) => {
-                            if (t.properties?.date && !existingKeys.includes('date')) {
-                                if (!requiredProps.find(rp => rp.key === 'date'))
-                                    requiredProps.push({ key: 'date', label: 'date', type: 'date' });
-                            }
-                            if (t.properties?.tags && !existingKeys.includes('tags')) {
-                                if (!requiredProps.find(rp => rp.key === 'tags'))
-                                    requiredProps.push({ key: 'tags', label: 'Tags', type: 'multi-select' });
-                            }
-                        });
-
-                        requiredProps.forEach(rp => {
-                            addDatabaseProperty(targetDb!, rp.label, rp.type);
-                        });
-                    }
-
                     action.tasks.forEach((task: any) => {
                         addDatabaseRow(targetDb!, {
                             title: task.title || task.name,
@@ -126,24 +104,18 @@ export const RoadmapCopilot = () => {
                             ...(task.properties || {})
                         });
                     });
-                    toast.success(`Generated ${action.tasks.length} roadmap items!`);
-                } else {
-                    toast.error("Couldn't find a place to put those tasks.");
+                    toast.success(`Synchronized ${action.tasks.length} strategic milestones.`);
                 }
                 break;
 
             case 'update_task':
                 if (action.taskId && action.updates) {
-                    // Find which block this task belongs to
                     const blockWithRow = blocks.find(b => b.data?.rows.some(r => r.id === action.taskId));
                     if (blockWithRow) {
-                        const row = blockWithRow.data?.rows.find(r => r.id === action.taskId);
-                        if (row) {
-                            updateDatabaseRow(blockWithRow.id, row.id, {
-                                values: { ...row.values, ...action.updates }
-                            });
-                            toast.success(`Task "${row.values.title}" updated.`);
-                        }
+                        updateDatabaseRow(blockWithRow.id, action.taskId, {
+                            values: { ...action.updates }
+                        });
+                        toast.success(`Protocol updated for task ${action.taskId}.`);
                     }
                 }
                 break;
@@ -155,9 +127,61 @@ export const RoadmapCopilot = () => {
                         const view = dbBlock.data.views.find(v => v.type.toLowerCase() === action.view.toLowerCase());
                         if (view) {
                             setActiveView(dbBlock.id, view.id);
-                            toast.info(`Switched to ${action.view} view.`);
+                        } else if (action.view.toLowerCase() === 'chart') {
+                            // Automatically add a chart view if requested
+                            addDatabaseView(dbBlock.id, 'Distribution Chart', 'Chart');
+                            toast.success("Initialized Charting Engine.");
                         }
                     }
+                }
+                break;
+
+            case 'style_page':
+                if (action.updates) {
+                    updatePage(activePageId, action.updates);
+                    toast.success("Aesthetic synchronized.");
+                }
+                break;
+
+            case 'add_block':
+                if (action.blockType) {
+                    addBlock(action.blockType as any);
+                    if (action.content) {
+                        // Small delay to let block generate
+                        setTimeout(() => {
+                            const lastBlock = useRoadmapStore.getState().blocks.slice(-1)[0];
+                            if (lastBlock) updateBlock(lastBlock.id, { content: action.content });
+                        }, 100);
+                    }
+                    toast.success(`Module deployed: ${action.blockType}`);
+                }
+                break;
+
+            case 'delete_item':
+                if (action.blockId) {
+                    deleteBlock(action.blockId);
+                    toast.info("Module decommissioned.");
+                }
+                break;
+
+            case 'refine_page':
+                if (action.suggestions) {
+                    const { title, icon, blocks: suggestionBlocks } = action.suggestions;
+                    if (title || icon) updatePage(activePageId, { title, icon });
+
+                    if (suggestionBlocks && suggestionBlocks.length > 0) {
+                        suggestionBlocks.forEach((sb: any, idx: number) => {
+                            setTimeout(() => {
+                                addBlock(sb.type, idx);
+                                setTimeout(() => {
+                                    const allBlocks = useRoadmapStore.getState().blocks;
+                                    const target = allBlocks.find(b => b.order === idx);
+                                    if (target) updateBlock(target.id, { content: sb.content });
+                                }, 50);
+                            }, idx * 100);
+                        });
+                    }
+                    toast.success("Architectural refinement complete.");
                 }
                 break;
 
@@ -246,11 +270,7 @@ export const RoadmapCopilot = () => {
                                     <Brain size={18} className="text-cyan-400" />
                                 </div>
                                 <div>
-                                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">Architect Mode</h3>
-                                    <div className="flex items-center gap-1.5">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                                        <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Neural Link Active</span>
-                                    </div>
+                                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-400">Strategy Kernel</h3>
                                 </div>
                             </div>
                             <button
