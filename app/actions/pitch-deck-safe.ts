@@ -3,8 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { Slide } from "@/lib/types/pitch-deck";
 
-console.log(">>> PITCH DECK SAFE SAVER ACTIVE @ " + new Date().toLocaleTimeString() + " <<<");
-
 export async function vaultPitchDeck(deckData: {
     id?: string;
     deck_title: string;
@@ -15,12 +13,6 @@ export async function vaultPitchDeck(deckData: {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Unauthorized");
-
-    console.log("Server Action: vaultPitchDeck ENTERED @ " + new Date().toLocaleTimeString(), {
-        id: deckData.id,
-        title: deckData.deck_title,
-        slideCount: deckData.slides_content?.length
-    });
 
     const payload = {
         user_id: user.id,
@@ -47,7 +39,6 @@ export async function vaultPitchDeck(deckData: {
     }
 
     if (result.error) {
-        console.error("Server Action: savePitchDeck ERROR:", result.error.code, result.error.message, result.error);
         throw result.error;
     }
 
@@ -55,38 +46,6 @@ export async function vaultPitchDeck(deckData: {
         id: result.data.id,
         success: true
     };
-}
-
-export async function uploadSlideImageAction(deckId: string, slideId: string, base64Data: string) {
-    const supabase = await createClient();
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("Unauthorized");
-
-    console.log(`Server Action: uploadSlideImageAction ENTERED for ${deckId}/${slideId}`);
-    console.log(`Payload size: ${base64Data.length} chars`);
-
-    const base64Content = base64Data.replace(/^data:image\/\w+;base64,/, '');
-    const buffer = Buffer.from(base64Content, 'base64');
-    const fileName = `${deckId}/${slideId}-${Date.now()}.jpg`;
-
-    const { error } = await supabase.storage
-        .from('pitch_deck_images')
-        .upload(fileName, buffer, {
-            contentType: 'image/jpeg',
-            upsert: false
-        });
-
-    if (error) {
-        console.error("Server Action: uploadSlideImageAction error:", error.message, error);
-        throw new Error(`Upload failed: ${error.message}`);
-    }
-
-    const { data: { publicUrl } } = supabase.storage
-        .from('pitch_deck_images')
-        .getPublicUrl(fileName);
-
-    return { publicUrl, fileName };
 }
 
 export async function fetchPitchDeckHistory() {
@@ -101,24 +60,10 @@ export async function fetchPitchDeckHistory() {
         .order('created_at', { ascending: false });
 
     if (error) {
-        console.error("fetchPitchDeckHistory server error:", error);
         throw new Error(error.message);
     }
 
-    if (!data) return [];
-
-    // LIGHTWEIGHT SYNC: Strip heavy images from all but the first slide to save egress
-    const lightweightData = data.map(project => ({
-        ...project,
-        slides_content: Array.isArray(project.slides_content) ? project.slides_content.map((slide: any, idx: number) => ({
-            ...slide,
-            // Keep image only for the first slide (preview)
-            moodImage: idx === 0 ? slide.moodImage : undefined,
-            // We can keep image_url for all as it's just a small string link
-        })) : []
-    }));
-
-    return lightweightData;
+    return data || [];
 }
 
 export async function fetchPitchDeckById(id: string) {
@@ -134,7 +79,6 @@ export async function fetchPitchDeckById(id: string) {
         .single();
 
     if (error) {
-        console.error(`fetchPitchDeckById server error for ${id}:`, error);
         throw new Error(error.message);
     }
     return data;

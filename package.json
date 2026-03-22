@@ -3,15 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "cross-env NODE_OPTIONS=--require=newrelic next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "cross-env NODE_OPTIONS=--require=newrelic next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "@hello-pangea/dnd": "^18.0.1",
     "@motionone/utils": "^10.18.0",
+    "@next/third-parties": "^16.2.1",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
@@ -27,6 +28,7 @@
     "@types/three": "^0.183.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cross-env": "^10.1.0",
     "date-fns": "^4.1.0",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.34.3",
@@ -35,10 +37,11 @@
     "jspdf-autotable": "^5.0.7",
     "jszip": "^3.10.1",
     "lucide-react": "^0.563.0",
-    "next": "16.1.6",
+    "newrelic": "^13.17.0",
+    "next": "^15.1.6",
     "pptxgenjs": "^4.0.1",
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
     "recharts": "^3.7.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
@@ -52,7 +55,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "16.1.6",
+    "eslint-config-next": "15.1.6",
     "typescript": "^5"
   }
 }
