@@ -11,8 +11,9 @@ exports.config = {
   // YEH BADALNA HAI NAYE PROJECT KE LIYE:
   app_name: ['monodesk-app'], 
   
-  // YEH HAMESHA SAME RAHEGA:
-  license_key: '437f6a83d18b224e2e332db2b438d182FFFFNRAL', 
+  // YEH HAMESHA SECURE RAHEGA:
+  license_key: process.env.NEW_RELIC_LICENSE_KEY || '', 
+
   
   logging: {
     level: 'info'
