@@ -22,6 +22,9 @@ export const metadata: Metadata = {
     shortcut: "/images/logo.png",
     apple: "/images/logo.png",
   },
+  other: {
+    "breachme-verify": "breachme-verify=monodesk-tech-a282d6b379910dab",
+  },
 };
 
 export const viewport: Viewport = {
